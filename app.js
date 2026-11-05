@@ -18,10 +18,29 @@ let chyby = {};
 function nactiUlozeny() {
   try {
     const s = window.localStorage.getItem(KLIC);
-    return s ? JSON.parse(s) : null;
+    return s ? ocistiUlozeny(JSON.parse(s)) : null;
   } catch {
     return null;
   }
+}
+
+/** Z uloženého plánu převezme jen známé klíče se správným typem a rozsahem, ostatní zůstanou výchozí. */
+function ocistiUlozeny(ulozeny) {
+  if (!ulozeny || typeof ulozeny !== 'object') return null;
+  const vysledek = {};
+  for (const [klic, vychozi] of Object.entries(VYCHOZI_VSTUP)) {
+    const h = ulozeny[klic];
+    if (h === undefined) continue;
+    let ok;
+    if (klic === 'kdoPpm') ok = ['matka', 'otec', 'nikdo'].includes(h);
+    else if (klic === 'terminPorodu') ok = typeof h === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(h);
+    else if (klic === 'rpVyse') ok = h === null || (Number.isFinite(h) && h >= 0);
+    else if (typeof vychozi === 'boolean') ok = typeof h === 'boolean';
+    else if (typeof vychozi === 'number') ok = Number.isFinite(h) && h >= 0;
+    else ok = typeof h === typeof vychozi;
+    if (ok) vysledek[klic] = h;
+  }
+  return vysledek;
 }
 function uloz() {
   try {
@@ -249,7 +268,7 @@ function vykresliChecklist() {
     polozky.push([`Před ${formatCz(plan.navratOd)}`, `Návrat do práce domluvte se zaměstnavatelem. U dítěte do 2 let hlídejte limit ${rules.jesleHodinMesicne} hodin měsíčně v jeslích nebo školce.`]);
   }
   polozky.push(['U zaměstnavatele', 'Uplatněte daňové zvýhodnění na dítě (v čisté mzdě zde není započteno).']);
-  polozky.push(['Narodí-li se další dítě', 'Nahlaste to Úřadu práce. Nárok na rodičovskou na starší dítě zaniká, ale nevyčerpaný zbytek lze vyplatit jednorázově.']);
+  polozky.push(['Narodí-li se další dítě', 'Nahlaste to Úřadu práce. Nárok na rodičovskou na starší dítě zaniká, ale nevyčerpaný zbytek lze vyplatit jednorázově, lze-li aspoň jednomu rodiči stanovit DVZ nebo je-li OSVČ (§ 30a odst. 1 ZSSP).']);
 
   const treti = pridejDny(prvniDenMesice(B, plan.rp.vekMesicu + 1), -1); // konec měsíce 3. narozenin
   polozky.push([`Do ${formatCz(treti)}`, 'Měsíc 3. narozenin je poslední měsíc čerpání rodičovské. Co do té doby nevyčerpáte, propadne.']);

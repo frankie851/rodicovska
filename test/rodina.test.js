@@ -386,3 +386,12 @@ test('ROD-11: URL zdrojů nevedou na OSVČ ani na úvodní stránku ČSSZ, RP od
   assert.equal(rules.otcovska.url, 'https://www.cssz.gov.cz/web/cz/otcovska');
   assert.ok(rules.zdroje.some((z) => z.url.includes('zakonyprolidi.cz/cs/1995-117')));
 });
+
+// ROD-12: čistá mzda má parametry pro rok 2027 (NV č. 177/2026 Sb., průměrná mzda 51 663 Kč).
+test('ROD-12: parametry čisté mzdy 2027 – hranice 23 % 154 989 Kč měsíčně, sleva 2 570 Kč', () => {
+  const p = parametryMzdy(rules, 2027);
+  assert.equal(p.odhad, false);
+  assert.equal(p.hraniceDan2Mesic, 154989);
+  assert.equal(p.slevaMesic, 2570);
+  assert.equal(cistaMzda(30000, p), 24590);
+});

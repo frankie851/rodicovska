@@ -82,6 +82,13 @@
       "hraniceDan2Mesic": 146901, "slevaMesic": 2570,
       "zdroj": "mpsv.gov.cz – Sociální pojištění v roce 2026; financnisprava.gov.cz – Daňové novinky 2026; z. č. 592/1992 Sb.",
       "url": "https://financnisprava.gov.cz/cs/financni-sprava/media-a-verejnost/tiskove-zpravy-gfr/tiskove-zpravy-2026/danove-novinky-pro-rok-2026"
+    },
+    "2027": {
+      "sp": 0.071, "zp": 0.045, "dan": 0.15, "dan2": 0.23,
+      "hraniceDan2Mesic": 154989, "slevaMesic": 2570,
+      "zdroj": "NV č. 177/2026 Sb. (všeobecný vyměřovací základ 2025 48 900 Kč × koeficient 1,0565 = průměrná mzda 51 663 Kč; 36 × 51 663 / 12 = 154 989 Kč); sazby a sleva beze změny (z. č. 592/1992 Sb., z. č. 586/1992 Sb.)",
+      "url": "https://www.zakonyprolidi.cz/cs/2026-177",
+      "overeno": "2026-11-05"
     }
   },
   "zdroje": [
