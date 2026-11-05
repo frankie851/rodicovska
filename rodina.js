@@ -110,6 +110,17 @@ export function davkaVeDni(rules, info, iso, sazba) {
   return denniDavka(redukovanyDvz(info.dvz, hranice, rules.ppm.redukce), sazba);
 }
 
+const NF_CZ = new Intl.NumberFormat('cs-CZ');
+
+/** Krátký popis denní dávky pro souhrn: sazba k nástupu a případně sazba po přepočtu od 1. ledna. */
+export function popisDenniDavky(info) {
+  const denne = (x) => `${NF_CZ.format(x)} Kč denně`;
+  const [, m, d] = info.poNovemRoce ? info.poNovemRoce.od.split('-') : [];
+  return info.poNovemRoce && info.poNovemRoce.denni !== info.denni
+    ? `${denne(info.denni)}, od ${Number(d)}. ${Number(m)}. ${info.poNovemRoce.od.slice(0, 4)} ${denne(info.poNovemRoce.denni)}`
+    : denne(info.denni);
+}
+
 /** Údaje o přepočtené dávce od 1. 1. roku `rok` (pro výpis „Jak jsme počítali“). */
 export function davkaPoNovemRoce(rules, info, rok, sazba) {
   const od = `${rok}-01-01`;
@@ -443,11 +454,16 @@ export function planRodiny(vstupy, rules) {
           : `Ani při maximální výši ${kc(strop)} se celá částka do 3 let nevyčerpá.`),
     });
   }
-  const pouziteHranice = [ppmInfo.matka, ppmInfo.otec, otcovska].filter(Boolean)
-    .flatMap((x) => [x.hranice, x.poNovemRoce?.hranice]).filter(Boolean);
-  const odhadHranice = pouziteHranice.find((h) => h.odhad);
-  if (odhadHranice) {
-    varovani.push({ typ: 'odhadHranice', uroven: 'info', text: `Redukční hranice pro požadovaný rok ještě nejsou v rules.json, použity hodnoty roku ${odhadHranice.rok}.` });
+  // Dávka za rok, pro který ještě nejsou vyhlášené redukční hranice: počítá se s posledními známými.
+  const odhad = [ppmInfo.matka, ppmInfo.otec, otcovska].filter(Boolean)
+    .flatMap((x) => [[x.datum, x.hranice], [x.poNovemRoce?.od, x.poNovemRoce?.hranice]])
+    .find(([datum, h]) => datum && h?.odhad);
+  if (odhad) {
+    const [datum, h] = odhad;
+    varovani.push({
+      typ: 'odhadHranice', uroven: 'info',
+      text: `Redukční hranice pro rok ${datum.slice(0, 4)} ještě nejsou vyhlášené (MPSV je vyhlašuje obvykle na podzim předchozího roku). Mateřskou a otcovskou za rok ${datum.slice(0, 4)} proto počítám s hranicemi roku ${h.rok}, skutečná částka se může mírně lišit.`,
+    });
   }
   if (odhadMzdy) {
     varovani.push({ typ: 'odhadMzdy', uroven: 'info', text: 'Pro čistou mzdu v dalších letech jsou použity sazby roku ' + Object.keys(rules.cistaMzda).sort().pop() + '.' });
@@ -456,7 +472,7 @@ export function planRodiny(vstupy, rules) {
   if (v.navrat && Number(v.navratOdMesice) < 24) {
     varovani.push({
       typ: 'jesle', uroven: 'info',
-      text: `Při návratu do práce se rodičovský příspěvek vyplácí dál, ale dítě mladší 2 let smí být v jeslích nebo školce nejvýš ${rules.jesleHodinMesicne} hodin měsíčně.`,
+      text: `Při návratu do práce se rodičovský příspěvek vyplácí dál, ale dítě mladší 2 let smí být v dětské skupině, mateřské škole nebo obdobném zařízení nejvýš ${rules.jesleHodinMesicne} hodin měsíčně (§ 31 odst. 3 písm. a) ZSSP).`,
     });
   }
 

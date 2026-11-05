@@ -1,5 +1,5 @@
 import {
-  planRodiny, VYCHOZI_VSTUP, formatCz, pridejDny, prvniDenMesice, popisMesice, overVstup,
+  planRodiny, VYCHOZI_VSTUP, formatCz, pridejDny, prvniDenMesice, popisMesice, overVstup, popisDenniDavky,
 } from './rodina.js';
 import { svgOsa, TYPY } from './timeline.js';
 
@@ -211,8 +211,8 @@ function vykresliSouhrn() {
   const s = plan.souhrn;
   const r = plan.rp;
   const ppmPozn = [
-    plan.matka.ppm && `matka ${kc(plan.matka.ppm.denni)} denně`,
-    plan.otec.ppm && `otec ${kc(plan.otec.ppm.denni)} denně`,
+    plan.matka.ppm && `matka ${popisDenniDavky(plan.matka.ppm)}`,
+    plan.otec.ppm && `otec ${popisDenniDavky(plan.otec.ppm)}`,
   ].filter(Boolean).join(', ');
   const vycerpani = r.mesicVycerpani != null
     ? popisMesiceDitete(r.mesicVycerpani)
@@ -221,7 +221,7 @@ function vykresliSouhrn() {
   $('#souhrn').innerHTML = [
     dlazdice('Dávky celkem dostaneme', kc(s.davky), 'mateřská + otcovská + rodičovská'),
     dlazdice('Mateřská', kc(s.ppm), ppmPozn || 'bez nároku'),
-    dlazdice('Otcovská', kc(s.otcovska), plan.otec.otcovska ? `${kc(plan.otec.otcovska.denni)} denně, 14 dní` : 'nečerpá se'),
+    dlazdice('Otcovská', kc(s.otcovska), plan.otec.otcovska ? `${popisDenniDavky(plan.otec.otcovska)}, 14 dní` : 'nečerpá se'),
     dlazdice('Rodičovský příspěvek vyčerpán', kc(r.vycerpano), `z ${kc(r.celkem)}, po ${kc(r.vyse)} měsíčně`),
     dlazdice('Rodičovská se vyčerpá', vycerpani, `${r.mesiceCerpani} měsíců čerpání`),
     dlazdice('Propadne k 3. narozeninám', kc(r.propadne), r.propadne > 0 ? 'zvyšte měsíční výši' : 'nic nepropadne', r.propadne > 0 ? 'pozor' : ''),
@@ -265,7 +265,7 @@ function vykresliChecklist() {
   polozky.push([`Od ${popisIso(mesicNarozeni)} (měsíc narození)`, `Rodičovský příspěvek: žádost na Úřadu práce ČR (online přes portál MPSV, datovou schránkou nebo osobně) lze podat hned po narození. Podle plánu náleží od ${popisIso(zacatekRp)}; výplatu lze uplatnit nejvýš 3 měsíce zpětně (§ 54 odst. 2 ZSSP), starší měsíce propadnou. Chcete-li víc než ${kc(plan.rp.minStrop)} měsíčně, přiložte Potvrzení o denním vyměřovacím základu od ČSSZ.`]);
   polozky.push(['Kdykoli během čerpání', `Výši rodičovské lze měnit jednou za ${rules.rpZmenaMesicu} měsíce, na písemnou žádost a ne zpětně.`]);
   if (plan.navratOd) {
-    polozky.push([`Před ${formatCz(plan.navratOd)}`, `Návrat do práce domluvte se zaměstnavatelem. U dítěte do 2 let hlídejte limit ${rules.jesleHodinMesicne} hodin měsíčně v jeslích nebo školce.`]);
+    polozky.push([`Před ${formatCz(plan.navratOd)}`, `Návrat do práce domluvte se zaměstnavatelem. U dítěte do 2 let hlídejte limit ${rules.jesleHodinMesicne} hodin měsíčně v dětské skupině, mateřské škole nebo obdobném zařízení.`]);
   }
   polozky.push(['U zaměstnavatele', 'Uplatněte daňové zvýhodnění na dítě (v čisté mzdě zde není započteno).']);
   polozky.push(['Narodí-li se další dítě', 'Nahlaste to Úřadu práce. Nárok na rodičovskou na starší dítě zaniká, ale nevyčerpaný zbytek lze vyplatit jednorázově, lze-li aspoň jednomu rodiči stanovit DVZ nebo je-li OSVČ (§ 30a odst. 1 ZSSP).']);
