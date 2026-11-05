@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   dvz, redukovanyDvz, denniDavka, dnyRozhodnehoObdobi, hraniceProDatum,
   pravidlaRp, stropRp, cerpaniRp, navrhVyse, cistaMzda, parametryMzdy,
-  planRodiny, pridejDny,
+  planRodiny, pridejDny, popisDenniDavky,
 } from '../rodina.js';
 
 const rules = JSON.parse(readFileSync(new URL('../rules.json', import.meta.url), 'utf8'));
@@ -311,7 +311,7 @@ test('ROD-03 kontrola: mateřská celá v jednom roce se nemění (135 436 Kč)'
   assert.equal(plan.matka.ppm.poNovemRoce, undefined);
 });
 
-// ROD-04: dítě do 2 let smí být v jeslích nebo školce do 120 hodin v kalendářním měsíci
+// ROD-04: dítě do 2 let smí být v dětské skupině nebo mateřské škole do 120 hodin v kalendářním měsíci
 // (§ 31 odst. 3 písm. a) ZSSP ve znění zákona č. 84/2025 Sb., od 1. 5. 2025).
 test('ROD-04: limit docházky do jeslí 120 hodin měsíčně', () => {
   assert.equal(rules.jesleHodinMesicne, 120);
@@ -394,4 +394,36 @@ test('ROD-12: parametry čisté mzdy 2027 – hranice 23 % 154 989 Kč měsíčn
   assert.equal(p.hraniceDan2Mesic, 154989);
   assert.equal(p.slevaMesic, 2570);
   assert.equal(cistaMzda(30000, p), 24590);
+});
+
+// ---------- Body „Mimo rozsah“ z PR #1 ----------
+
+test('jesle: text odpovídá § 31 odst. 3 písm. a) ZSSP (dětská skupina, mateřská škola)', () => {
+  const plan = planRodiny({ terminPorodu: '2026-05-10', prijemMatka: 30000, kdoPpm: 'matka', navrat: true, navratOdMesice: 10 }, rules);
+  const t = plan.varovani.find((x) => x.typ === 'jesle').text;
+  assert.match(t, /dětské skupině, mateřské škole nebo obdobném zařízení/);
+  assert.doesNotMatch(t, /jeslích|školce/);
+});
+
+test('souhrn mateřské a otcovské uvádí i sazbu po přepočtu od 1. ledna', () => {
+  const plan = planRodiny({ terminPorodu: '2027-01-20', prijemMatka: 80000, kdoPpm: 'matka', otcovska: false }, rules);
+  const mezery = (t) => t.replace(/[\u00a0\u202f]/g, ' '); // Intl.NumberFormat dává nezlomitelné mezery
+  assert.equal(mezery(popisDenniDavky(plan.matka.ppm)), '1 524 Kč denně, od 1. 1. 2027 1 578 Kč denně');
+  const bez = planRodiny({ terminPorodu: '2026-03-15', prijemMatka: 30000, kdoPpm: 'matka', otcovska: false }, rules);
+  assert.equal(mezery(popisDenniDavky(bez.matka.ppm)), '691 Kč denně');
+  const otc = planRodiny({ terminPorodu: '2026-12-24', prijemOtec: 80000, otcovska: true, otcovskaOdDne: 4 }, rules);
+  assert.equal(mezery(popisDenniDavky(otc.otec.otcovska)), '1 524 Kč denně, od 1. 1. 2027 1 578 Kč denně');
+  // Hranice 2028 ještě nejsou vyhlášené → sazba po 1. 1. 2028 je stejná, uvede se jen jednou.
+  const odhad = planRodiny({ terminPorodu: '2027-12-15', prijemMatka: 80000, kdoPpm: 'matka', otcovska: false }, rules);
+  assert.equal(mezery(popisDenniDavky(odhad.matka.ppm)), '1 578 Kč denně');
+});
+
+test('chybějící redukční hranice: upozornění jmenuje rok a nemluví o rules.json', () => {
+  // Mateřská od 3. 11. 2027 přechází do roku 2028, pro který hranice ještě nejsou vyhlášené.
+  const plan = planRodiny({ terminPorodu: '2027-12-15', prijemMatka: 80000, kdoPpm: 'matka', otcovska: false }, rules);
+  const v = plan.varovani.find((x) => x.typ === 'odhadHranice');
+  assert.ok(v, 'chybí upozornění');
+  assert.match(v.text, /2028/);
+  assert.match(v.text, /hranicemi roku 2027/);
+  assert.doesNotMatch(v.text, /rules\.json/);
 });
