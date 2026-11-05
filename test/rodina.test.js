@@ -308,3 +308,13 @@ test('ROD-03 kontrola: mateřská celá v jednom roce se nemění (135 436 Kč)'
   assert.equal(plan.souhrn.ppm, 135436);
   assert.equal(plan.matka.ppm.poNovemRoce, undefined);
 });
+
+// ROD-04: dítě do 2 let smí být v jeslích nebo školce do 120 hodin v kalendářním měsíci
+// (§ 31 odst. 3 písm. a) ZSSP ve znění zákona č. 84/2025 Sb., od 1. 5. 2025).
+test('ROD-04: limit docházky do jeslí 120 hodin měsíčně', () => {
+  assert.equal(rules.jesleHodinMesicne, 120);
+  const plan = planRodiny({ terminPorodu: '2026-05-10', prijemMatka: 30000, kdoPpm: 'matka', navrat: true, navratOdMesice: 10 }, rules);
+  const v = plan.varovani.find((x) => x.typ === 'jesle');
+  assert.match(v.text, /120 hodin/);
+  assert.doesNotMatch(v.text, /92/);
+});

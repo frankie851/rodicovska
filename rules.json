@@ -67,7 +67,11 @@
   "rpPodilDvz": 0.7,
   "rpDnu": 30,
   "rpZmenaMesicu": 3,
-  "jesleHodinMesicne": 92,
+  "jesleHodinMesicne": 120,
+  "jesleHodinMesicneZdroj": "ZSSP (z. č. 117/1995 Sb.) § 31 odst. 3 písm. a) ve znění zákona č. 84/2025 Sb. (čl. III bod 3, účinnost 1. 5. 2025): do 120 hodin v kalendářním měsíci",
+  "jesleHodinMesicneUrl": "https://www.zakonyprolidi.cz/cs/1995-117#p31",
+  "jesleHodinMesicneUrlNovela": "https://www.zakonyprolidi.cz/cs/2025-84",
+  "jesleHodinMesicneOvereno": "2026-11-05",
   "cistaMzda": {
     "2026": {
       "sp": 0.071, "zp": 0.045, "dan": 0.15, "dan2": 0.23,
