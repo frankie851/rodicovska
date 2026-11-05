@@ -142,6 +142,7 @@ export function stropRp({ redDvz = [], vicercata = false }, rp, rules) {
  * Zbývající částka klesá o měsíční výši, dokud není nula nebo neskončí měsíc 3. narozenin.
  * `odecet(m)` = PPM vyplacená rodičům za měsíc m: RP pak náleží jen ve výši rozdílu, je-li vyšší
  * (§ 30b odst. 3 ZSSP). Měsíce, za které RP nenáleží, se do `mesice` nezapisují.
+ * Nižší zbytek se nevyplácí jako další měsíc, ale spolu s poslední částkou (§ 30 odst. 6 ZSSP).
  */
 export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36, odecet = () => 0 }) {
   let zbyva = celkem;
@@ -151,8 +152,13 @@ export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36, o
     for (let m = Math.max(0, odMesice); m <= vekMesicu && zbyva > 0; m++) {
       const naleziMesic = Math.max(0, mesicniVyse - (odecet(m) || 0));
       if (naleziMesic <= 0) continue;
-      const castka = Math.min(naleziMesic, zbyva);
+      let castka = Math.min(naleziMesic, zbyva);
       zbyva -= castka;
+      // Zbývá-li méně než částka za aktuální měsíc, vyplatí se zbytek spolu s ní (§ 30 odst. 6 ZSSP).
+      if (zbyva > 0 && zbyva < castka) {
+        castka += zbyva;
+        zbyva = 0;
+      }
       mesice.push({ mesic: m, castka });
       if (zbyva === 0) mesicVycerpani = m;
     }

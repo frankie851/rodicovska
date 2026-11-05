@@ -26,16 +26,18 @@ test('DVZ 1 000 Kč → strop rodičovské 21 000 Kč měsíčně', () => {
   assert.equal(stropRp({ redDvz: [1000], vicercata: false }, rp, rules), 21000);
 });
 
-test('bez DVZ, 15 000 Kč měsíčně → 350 000 Kč vyčerpáno za 24 měsíců (23 × 15 000 + 5 000)', () => {
+// Zadání uvádí 24 měsíců (23 × 15 000 + 5 000), to ale odporuje § 30 odst. 6 ZSSP: zbytek nižší než
+// měsíční částka se vyplatí spolu s ní, tedy 22 × 15 000 + 20 000 za 23 měsíců (revize 5. 11. 2026, ROD-05).
+test('bez DVZ, 15 000 Kč měsíčně → 350 000 Kč vyčerpáno za 23 měsíců (22 × 15 000 + 20 000)', () => {
   const rp = pravidlaRp(rules, '2026-06-01');
   const strop = stropRp({ redDvz: [], vicercata: false }, rp, rules);
   assert.equal(strop, 15000);
   const c = cerpaniRp({ celkem: rp.celkem, mesicniVyse: 15000, odMesice: 0 });
   assert.equal(c.vycerpano, 350000);
-  assert.equal(c.mesice.length, 24);
-  assert.equal(c.mesice.filter((m) => m.castka === 15000).length, 23);
-  assert.equal(c.mesice.at(-1).castka, 5000);
-  assert.equal(c.mesicVycerpani, 23);
+  assert.equal(c.mesice.length, 23);
+  assert.equal(c.mesice.filter((m) => m.castka === 15000).length, 22);
+  assert.equal(c.mesice.at(-1).castka, 20000);
+  assert.equal(c.mesicVycerpani, 22);
   assert.equal(c.propadne, 0);
 });
 
@@ -317,4 +319,35 @@ test('ROD-04: limit docházky do jeslí 120 hodin měsíčně', () => {
   const v = plan.varovani.find((x) => x.typ === 'jesle');
   assert.match(v.text, /120 hodin/);
   assert.doesNotMatch(v.text, /92/);
+});
+
+// ROD-05: zbývá-li po odečtení aktuální měsíční částky méně než tato částka, vyplatí se zbytek spolu s ní
+// (§ 30 odst. 6 ZSSP).
+test('ROD-05: 350 000 Kč po 15 000 Kč → 23 měsíců, poslední 20 000 Kč', () => {
+  const c = cerpaniRp({ celkem: 350000, mesicniVyse: 15000, odMesice: 0, vekMesicu: 36 });
+  assert.equal(c.mesice.length, 23);
+  assert.equal(c.mesice.at(-1).castka, 20000);
+  assert.equal(c.mesicVycerpani, 22);
+  assert.equal(c.vycerpano, 350000);
+  assert.equal(c.propadne, 0);
+});
+
+test('ROD-05: vícerčata 700 000 Kč po 30 000 Kč od 1. 6. 2026 → vyčerpání duben 2028, poslední 40 000 Kč', () => {
+  const plan = planRodiny({
+    terminPorodu: '2026-06-01', prijemMatka: 0, prijemOtec: 0, kdoPpm: 'nikdo', vicercata: true, otcovska: false, rpVyse: 30000,
+  }, rules);
+  assert.equal(plan.rp.mesicVycerpani, 22);
+  const m = plan.mesice.find((x) => x.index === 22);
+  assert.equal(m.rok, 2028);
+  assert.equal(m.mesic, 4);
+  const rpPolozky = plan.mesice.flatMap((x) => x.polozky).filter((p) => p.typ === 'rp');
+  assert.equal(rpPolozky.at(-1).castka, 40000);
+  assert.equal(plan.rp.mesiceCerpani, 23);
+});
+
+test('ROD-05 + ROD-02: zbytek se přičte i ke skutečné částce měsíce; nízká mateřská → vyčerpání v měsíci 26', () => {
+  const plan = planRodiny({ terminPorodu: '2026-03-15', prijemMatka: 15000, kdoPpm: 'matka', otcovska: false, rpVyse: 15000 }, rules);
+  assert.equal(plan.rp.mesicVycerpani, 26);
+  assert.equal(plan.rp.vycerpano, 350000);
+  assert.equal(rpVMesici(plan, 26), 15000 + 3128); // 350 000 − 31 872 (měsíce 0–5) − 21 × 15 000
 });
