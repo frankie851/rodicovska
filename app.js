@@ -179,8 +179,8 @@ function vykresliChecklist() {
   polozky.push(['U zaměstnavatele', 'Uplatněte daňové zvýhodnění na dítě (v čisté mzdě zde není započteno).']);
   polozky.push(['Narodí-li se další dítě', 'Nahlaste to Úřadu práce. Nárok na rodičovskou na starší dítě zaniká, ale nevyčerpaný zbytek lze vyplatit jednorázově.']);
 
-  const treti = pridejDny(prvniDenMesice(B, 36), -1);
-  polozky.push([`Do ${formatCz(treti)}`, 'Poslední měsíc čerpání rodičovské. Co do té doby nevyčerpáte, propadne.']);
+  const treti = pridejDny(prvniDenMesice(B, plan.rp.vekMesicu + 1), -1); // konec měsíce 3. narozenin
+  polozky.push([`Do ${formatCz(treti)}`, 'Měsíc 3. narozenin je poslední měsíc čerpání rodičovské. Co do té doby nevyčerpáte, propadne.']);
 
   $('#checklist').innerHTML = polozky.map(([kdy, co]) => `<li><span class="kdy">${esc(kdy)}:</span> ${esc(co)}</li>`).join('');
 }

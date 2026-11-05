@@ -66,7 +66,7 @@ Pole `rodicovsky` obsahuje záznamy podle data narození dítěte (`narozeniOd`)
 - `celkem`, `celkemVicercata`: celková částka
 - `minStrop`, `minStropVicercata`: měsíční maximum bez DVZ nebo s nízkým DVZ (15 000 / 30 000 Kč)
 - `nasobekVicercata`: násobek stropu podle DVZ u vícerčat (od 2026 je to 2)
-- `vekMesicu`: do kdy se čerpá (36 = do 3 let)
+- `vekMesicu`: do kdy se čerpá (36 = včetně měsíce 3. narozenin, § 30b odst. 1 písm. d) ZSSP)
 - `pozn`: volitelná poznámka, zobrazí se jako informace
 
 Aktuálně: 350 000 / 700 000 Kč pro děti narozené od 1. 1. 2026 a 400 000 / 800 000 Kč pro děti
@@ -92,7 +92,7 @@ průměrné mzdy / 12) a měsíční slevu na poplatníka. Nový rok doplňte po
 4. **Mateřská**: 28 týdnů (vícerčata 37), nástup 6–8 týdnů před termínem. Otec ji může převzít nejdříve od 7. týdne.
 5. **Otcovská**: 14 dní, nástup do 6 týdnů od narození.
 6. **Strop RP** = max(15 000 Kč; 70 % × 30 × vyšší redukovaný DVZ rodičů). U vícerčat 30 000 Kč a dvojnásobek.
-7. **Čerpání RP** začíná v kalendářním měsíci po skončení mateřské (bez mateřské v měsíci narození). Každý měsíc se zbývající částka sníží o zvolenou výši, nejdéle do konce 35. měsíce věku dítěte. Zbytek **propadne**.
+7. **Čerpání RP** začíná v kalendářním měsíci po skončení mateřské (bez mateřské v měsíci narození). Každý měsíc se zbývající částka sníží o zvolenou výši, nejdéle do konce kalendářního měsíce, v němž dítě dosáhne 3 let (měsíc 3. narozenin se počítá celý, § 30b odst. 1 písm. d) ZSSP). Zbytek **propadne**.
 
 ### Porovnání s kalkulačkou MPSV
 

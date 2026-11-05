@@ -119,15 +119,16 @@ export function stropRp({ redDvz = [], vicercata = false }, rp, rules) {
 }
 
 /**
- * Čerpání RP po měsících věku dítěte (0 = měsíc narození, poslední = vekMesicu − 1).
- * Zbývající částka klesá o měsíční výši, dokud není nula nebo dítěti nejsou 3 roky.
+ * Čerpání RP po měsících věku dítěte (0 = měsíc narození, poslední = vekMesicu = měsíc 3. narozenin,
+ * který se počítá celý – § 30b odst. 1 písm. d) ZSSP).
+ * Zbývající částka klesá o měsíční výši, dokud není nula nebo neskončí měsíc 3. narozenin.
  */
 export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36 }) {
   let zbyva = celkem;
   const mesice = [];
   let mesicVycerpani = null;
   if (mesicniVyse > 0) {
-    for (let m = Math.max(0, odMesice); m < vekMesicu && zbyva > 0; m++) {
+    for (let m = Math.max(0, odMesice); m <= vekMesicu && zbyva > 0; m++) {
       const castka = Math.min(mesicniVyse, zbyva);
       zbyva -= castka;
       mesice.push({ mesic: m, castka });
@@ -137,9 +138,9 @@ export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36 })
   return { mesice, vycerpano: celkem - zbyva, propadne: zbyva, mesicVycerpani };
 }
 
-/** Nejnižší měsíční výše (na stovky nahoru), se kterou se RP vyčerpá do 3 let. */
+/** Nejnižší měsíční výše (na stovky nahoru), se kterou se RP vyčerpá do 3 let (měsíce odMesice až vekMesicu včetně). */
 export function navrhVyse(celkem, odMesice, vekMesicu = 36, krok = 100) {
-  const mesicu = Math.max(1, vekMesicu - odMesice);
+  const mesicu = Math.max(1, vekMesicu - odMesice + 1);
   return Math.ceil(celkem / mesicu / krok) * krok;
 }
 
@@ -192,7 +193,8 @@ export function planRodiny(vstupy, rules) {
   const v = { ...VYCHOZI_VSTUP, ...vstupy };
   const varovani = [];
   const B = v.terminPorodu;
-  const vek = 36;
+  const rp = pravidlaRp(rules, B);
+  const vek = rp.vekMesicu; // měsíc 3. narozenin (index 36) je poslední měsíc čerpání
   const P = rules.ppm;
   const sestinedeli = pridejDny(B, P.otecOdDne);
   const ppmDny = 7 * (v.vicercata ? P.tydnyVicercata : P.tydny);
@@ -277,7 +279,7 @@ export function planRodiny(vstupy, rules) {
 
   // Den po dni: kdo pobírá mateřskou, kdo pracuje
   const startHorizontu = prvniDenMesice(ppm && ppm.start < B ? ppm.start : B);
-  const konecHorizontu = pridejDny(prvniDenMesice(B, vek), -1);
+  const konecHorizontu = pridejDny(prvniDenMesice(B, vek + 1), -1); // poslední den měsíce 3. narozenin
   const mesice = new Map();
   const ppmInfo = { matka: null, otec: null };
   for (let ms = parseDatum(startHorizontu); ms <= parseDatum(konecHorizontu); ms += DEN_MS) {
@@ -308,7 +310,6 @@ export function planRodiny(vstupy, rules) {
   }
 
   // Rodičovský příspěvek
-  const rp = pravidlaRp(rules, B);
   const celkem = v.vicercata ? rp.celkemVicercata : rp.celkem;
   const posledniPpm = [...mesice.values()].filter((m) => m.ppm.matka + m.ppm.otec > 0).map((m) => m.index).pop();
   const rpOd = posledniPpm === undefined ? 0 : Math.max(0, posledniPpm + 1);

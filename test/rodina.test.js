@@ -39,10 +39,12 @@ test('bez DVZ, 15 000 Kč měsíčně → 350 000 Kč vyčerpáno za 24 měsíc�
   assert.equal(c.propadne, 0);
 });
 
-test('rodičovská od 6. měsíce po 8 000 Kč → do 3 let 240 000 Kč, propadne 110 000 Kč a aplikace upozorní', () => {
+// Zadání uvádí 240 000 / 110 000 Kč, to ale odporuje § 30b odst. 1 písm. d) ZSSP: měsíc, v němž dítě
+// dosáhne 3 let, se počítá celý, takže se čerpá v měsících 6–36 (31 měsíců). Revize 5. 11. 2026, ROD-01.
+test('rodičovská od 6. měsíce po 8 000 Kč → do 3 let 248 000 Kč, propadne 102 000 Kč a aplikace upozorní', () => {
   const c = cerpaniRp({ celkem: 350000, mesicniVyse: 8000, odMesice: 6 });
-  assert.equal(c.vycerpano, 240000);
-  assert.equal(c.propadne, 110000);
+  assert.equal(c.vycerpano, 248000);
+  assert.equal(c.propadne, 102000);
   assert.equal(c.mesicVycerpani, null);
 
   // Celý plán: matka na mateřské 6 týdnů před porodem → RP od 6. měsíce dítěte.
@@ -51,11 +53,11 @@ test('rodičovská od 6. měsíce po 8 000 Kč → do 3 let 240 000 Kč, propadn
     kdoPpm: 'matka', otcovska: false, rpVyse: 8000,
   }, rules);
   assert.equal(plan.rp.odMesice, 6);
-  assert.equal(plan.rp.vycerpano, 240000);
-  assert.equal(plan.rp.propadne, 110000);
+  assert.equal(plan.rp.vycerpano, 248000);
+  assert.equal(plan.rp.propadne, 102000);
   const v = plan.varovani.find((x) => x.typ === 'propadnuti');
   assert.ok(v, 'chybí varování o propadnutí');
-  assert.match(v.text, /110\s000/);
+  assert.match(v.text, /102\s000/);
 });
 
 test('vícerčata bez DVZ → strop 30 000 Kč, celkem 700 000 Kč', () => {
@@ -113,14 +115,15 @@ test('porod v lednu 2027 s nástupem v prosinci 2026 → mateřská podle hranic
   assert.equal(plan.rp.celkem, 400000);
 });
 
-test('narození od 1. 1. 2027 → 400 000 Kč, stejný scénář 8 000 Kč od 6. měsíce → propadne 160 000 Kč', () => {
+// 400 000 − 248 000 = 152 000 Kč (měsíce 6–36, § 30b odst. 1 písm. d) ZSSP; revize 5. 11. 2026, ROD-01).
+test('narození od 1. 1. 2027 → 400 000 Kč, stejný scénář 8 000 Kč od 6. měsíce → propadne 152 000 Kč', () => {
   const plan = planRodiny({
     terminPorodu: '2027-03-15', prijemMatka: 30000, prijemOtec: 40000,
     kdoPpm: 'matka', otcovska: false, rpVyse: 8000,
   }, rules);
   assert.equal(plan.rp.celkem, 400000);
-  assert.equal(plan.rp.vycerpano, 240000);
-  assert.equal(plan.rp.propadne, 160000);
+  assert.equal(plan.rp.vycerpano, 248000);
+  assert.equal(plan.rp.propadne, 152000);
   assert.ok(plan.varovani.some((x) => x.typ === 'novela400'));
 });
 
@@ -129,8 +132,9 @@ test('vícerčata 2027 → 800 000 Kč', () => {
 });
 
 test('návrh výše pro vyčerpání do 3 let', () => {
-  assert.equal(navrhVyse(350000, 6, 36), 11700); // 350 000 / 30 = 11 666,67 → nahoru na stovky
-  const c = cerpaniRp({ celkem: 350000, mesicniVyse: 11700, odMesice: 6 });
+  // 350 000 / 31 měsíců (6–36, § 30b odst. 1 písm. d) ZSSP) = 11 290,32 → nahoru na stovky (revize 5. 11. 2026, ROD-01)
+  assert.equal(navrhVyse(350000, 6, 36), 11300);
+  const c = cerpaniRp({ celkem: 350000, mesicniVyse: 11300, odMesice: 6 });
   assert.equal(c.propadne, 0);
 });
 
@@ -193,4 +197,41 @@ test('dřívější návrat do práce do 2 let → upozornění na limit jeslí'
   assert.ok(plan.varovani.some((x) => x.typ === 'jesle'));
   const m12 = plan.mesice.find((m) => m.index === 12);
   assert.ok(m12.polozky.some((p) => p.typ === 'mzda' && p.kdo === 'matka'));
+});
+
+// ---------- Regrese z revize 5. 11. 2026 ----------
+
+// ROD-01: měsíc, v němž dítě dosáhne 3 let, se počítá celý (§ 30b odst. 1 písm. d) ZSSP).
+test('ROD-01: měsíc 3. narozenin je poslední měsíc čerpání (cerpaniRp, měsíce 6–36)', () => {
+  const c = cerpaniRp({ celkem: 350000, mesicniVyse: 8000, odMesice: 6, vekMesicu: 36 });
+  assert.equal(c.vycerpano, 248000);
+  assert.equal(c.propadne, 102000);
+  assert.equal(c.mesice.length, 31);
+  assert.equal(c.mesice.at(-1).mesic, 36);
+});
+
+test('ROD-01: plán končí březnem 2029 (měsíc 3. narozenin), propadne 102 000 Kč', () => {
+  const plan = planRodiny({
+    terminPorodu: '2026-03-15', prijemMatka: 30000, prijemOtec: 40000,
+    kdoPpm: 'matka', otcovska: false, rpVyse: 8000,
+  }, rules);
+  assert.equal(plan.rp.propadne, 102000);
+  const posledni = plan.mesice.at(-1);
+  assert.equal(posledni.index, 36);
+  assert.equal(posledni.rok, 2029);
+  assert.equal(posledni.mesic, 3);
+  assert.match(plan.varovani.find((x) => x.typ === 'propadnuti').text, /102\s000/);
+});
+
+test('ROD-01: návrh výše počítá s 31 měsíci (6–36) → 11 300 Kč', () => {
+  assert.equal(navrhVyse(350000, 6, 36), 11300);
+});
+
+test('ROD-01: bez mateřské 9 000 Kč měsíčně → 37 měsíců (bře 2026 – bře 2029), 333 000 Kč', () => {
+  const plan = planRodiny({
+    terminPorodu: '2026-03-15', prijemMatka: 0, prijemOtec: 0, kdoPpm: 'nikdo', otcovska: false, rpVyse: 9000,
+  }, rules);
+  assert.equal(plan.rp.mesiceCerpani, 37);
+  assert.equal(plan.rp.vycerpano, 333000);
+  assert.equal(plan.rp.propadne, 17000);
 });
