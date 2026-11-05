@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rodičovská pro celou rodinu</title>
+  <meta name="description" content="Orientační plánovač mateřské, otcovské a rodičovského příspěvku po měsících do 3 let dítěte.">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="hlavicka">
+    <div class="obal">
+      <h1>Rodičovská pro celou rodinu</h1>
+      <p class="podtitul">Plánovač mateřské, otcovské a rodičovského příspěvku od porodu do 3 let dítěte. Počítá se jen ve vašem prohlížeči.</p>
+    </div>
+  </header>
+
+  <main class="obal">
+    <noscript><p class="chyba">Plánovač potřebuje zapnutý JavaScript.</p></noscript>
+
+    <!-- 1. Formulář -->
+    <section aria-labelledby="h-formular" class="karta">
+      <h2 id="h-formular">1. Vaše situace</h2>
+      <form id="formular" novalidate>
+        <div class="mrizka">
+          <label class="pole">
+            <span>Termín porodu</span>
+            <input type="date" name="terminPorodu" required min="2026-01-01">
+          </label>
+          <label class="pole zaskrt">
+            <input type="checkbox" name="vicercata">
+            <span>Čekáme dvojčata nebo vícerčata</span>
+          </label>
+        </div>
+
+        <fieldset>
+          <legend>Hrubý měsíční příjem (průměr za posledních 12 měsíců)</legend>
+          <div class="mrizka">
+            <label class="pole">
+              <span>Matka (Kč)</span>
+              <input type="number" name="prijemMatka" min="0" step="100" inputmode="numeric">
+            </label>
+            <label class="pole">
+              <span>Otec (Kč)</span>
+              <input type="number" name="prijemOtec" min="0" step="100" inputmode="numeric">
+            </label>
+            <label class="pole zaskrt">
+              <input type="checkbox" name="narokMatka">
+              <span>Matka byla nemocensky pojištěna aspoň 270 dní za poslední 2 roky</span>
+            </label>
+            <label class="pole zaskrt">
+              <input type="checkbox" name="narokOtec">
+              <span>Otec je zaměstnaný a nemocensky pojištěný</span>
+            </label>
+          </div>
+          <p class="napoveda">Počítá se se zaměstnanci. U OSVČ platí jiná pravidla pro nárok i výpočet, výsledky proto neodpovídají.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Mateřská a otcovská</legend>
+          <div class="mrizka">
+            <label class="pole">
+              <span>Kdo nastoupí na mateřskou</span>
+              <select name="kdoPpm">
+                <option value="matka">Matka (6–8 týdnů před porodem)</option>
+                <option value="otec">Otec (nejdříve od 7. týdne po porodu)</option>
+                <option value="nikdo">Nikdo (bez nároku)</option>
+              </select>
+            </label>
+            <label class="pole">
+              <span>Nástup matky před termínem</span>
+              <select name="ppmTydnuPred">
+                <option value="6">6 týdnů</option>
+                <option value="7">7 týdnů</option>
+                <option value="8">8 týdnů</option>
+              </select>
+            </label>
+            <label class="pole zaskrt">
+              <input type="checkbox" name="otcovska">
+              <span>Otec čerpá otcovskou (14 dní)</span>
+            </label>
+            <label class="pole">
+              <span>Otcovská od (dní po porodu)</span>
+              <input type="number" name="otcovskaOdDne" min="0" max="28" step="1" inputmode="numeric">
+            </label>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+
+    <!-- 2. Časová osa -->
+    <section aria-labelledby="h-osa" class="karta">
+      <h2 id="h-osa">2. Časová osa po měsících</h2>
+
+      <div class="ovladani">
+        <label class="pole" for="rpVyse">
+          <span>Výše rodičovského příspěvku: <output id="rpVyseText" for="rpVyse">–</output> měsíčně</span>
+        </label>
+        <input type="range" id="rpVyse" min="1000" max="15000" step="100" aria-describedby="rpVyseInfo">
+        <p class="napoveda" id="rpVyseInfo">–</p>
+        <div class="tlacitka">
+          <button type="button" id="btnNavrh">Vyčerpat přesně do 3 let</button>
+          <button type="button" id="btnMax">Maximum</button>
+        </div>
+
+        <div class="mrizka">
+          <label class="pole zaskrt">
+            <input type="checkbox" name="stridani" form="formular">
+            <span>Střídání rodičů</span>
+          </label>
+          <label class="pole">
+            <span>Druhý rodič přebírá péči od měsíce dítěte</span>
+            <input type="number" name="stridaniOdMesice" form="formular" min="1" max="35" step="1" inputmode="numeric">
+          </label>
+          <label class="pole zaskrt">
+            <input type="checkbox" name="navrat" form="formular">
+            <span>Dřívější návrat do práce (oba rodiče pracují)</span>
+          </label>
+          <label class="pole">
+            <span>Návrat od měsíce dítěte</span>
+            <input type="number" name="navratOdMesice" form="formular" min="2" max="35" step="1" inputmode="numeric">
+          </label>
+        </div>
+      </div>
+
+      <ul id="varovani" class="varovani" aria-live="polite"></ul>
+
+      <ul class="legenda" id="legenda" aria-label="Legenda"></ul>
+      <p class="napoveda">★ měsíc porodu, ✓ měsíc, kdy se rodičovská vyčerpá. Částky vpravo jsou měsíční příjem rodiny (dávky a orientační čisté mzdy).</p>
+      <div id="osa" class="osa-obal"></div>
+
+      <details class="tabulka-obal">
+        <summary>Tabulka po měsících</summary>
+        <table id="tabulka">
+          <thead><tr><th scope="col">Měsíc</th><th scope="col">Dávky</th><th scope="col">Mzdy</th><th scope="col">Celkem</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </details>
+    </section>
+
+    <!-- 3. Souhrn -->
+    <section aria-labelledby="h-souhrn" class="karta">
+      <h2 id="h-souhrn">3. Souhrn</h2>
+      <div id="souhrn" class="souhrn"></div>
+      <details>
+        <summary>Jak jsme počítali</summary>
+        <div id="detail"></div>
+      </details>
+      <div class="tlacitka">
+        <button type="button" id="btnUlozit">Uložit plán v tomto prohlížeči</button>
+        <button type="button" id="btnSmazat">Smazat uložený plán</button>
+        <span id="ulozeniStav" role="status"></span>
+      </div>
+    </section>
+
+    <!-- 4. Kontrolní seznam -->
+    <section aria-labelledby="h-checklist" class="karta">
+      <h2 id="h-checklist">4. Kontrolní seznam: kdy a kde požádat</h2>
+      <ol id="checklist" class="checklist"></ol>
+    </section>
+  </main>
+
+  <!-- 5. Patička -->
+  <footer class="paticka">
+    <div class="obal">
+      <p><strong>Orientační výpočet, nejde o rozhodnutí úřadu.</strong> O dávkách rozhoduje ČSSZ (mateřská, otcovská) a Úřad práce ČR (rodičovský příspěvek). Předpokládá se porod v termínu a stejný příjem v celém rozhodném období.</p>
+      <p>Pravidla ověřena: <span id="overeno">–</span>. Zadané údaje se nikam neodesílají. Plán můžete uložit jen do tohoto prohlížeče.</p>
+      <details>
+        <summary>Zdroje</summary>
+        <ul id="zdroje"></ul>
+      </details>
+    </div>
+  </footer>
+</body>
+</html>

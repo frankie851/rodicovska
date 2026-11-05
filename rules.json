@@ -1,0 +1,90 @@
+{
+  "overeno": "2026-11-05",
+  "poznamka": "Parametry pro výpočet. Každý rok doplňte nový rok do redukcniHranice a cistaMzda (viz README.md).",
+  "redukcniHranice": {
+    "2025": {
+      "h1": 1552, "h2": 2328, "h3": 4656,
+      "zdroj": "mpsv.gov.cz – Sociální pojištění v roce 2025",
+      "url": "https://mpsv.gov.cz/socialni-pojisteni-v-roce-2025"
+    },
+    "2026": {
+      "h1": 1633, "h2": 2449, "h3": 4897,
+      "zdroj": "Sdělení MPSV č. 397/2025 Sb.; mpsv.gov.cz – Nemocenské pojištění v roce 2026",
+      "url": "https://mpsv.gov.cz/nemocenske-pojisteni"
+    },
+    "2027": {
+      "h1": 1723, "h2": 2584, "h3": 5167,
+      "zdroj": "Sdělení MPSV č. 185/2026 Sb. (podepsáno 8. 10. 2026, vyhlášeno 13. 10. 2026)",
+      "url": "https://e-sbirka.gov.cz/sb/2026/185"
+    }
+  },
+  "ppm": {
+    "sazba": 0.7,
+    "redukce": [1, 0.6, 0.3],
+    "tydny": 28,
+    "tydnyVicercata": 37,
+    "nastupTydnyPredMin": 6,
+    "nastupTydnyPredMax": 8,
+    "otecOdDne": 42,
+    "otecMaxTydny": 22,
+    "otecMaxTydnyVicercata": 31,
+    "narokDnyPojisteni": 270,
+    "zdroj": "mpsv.gov.cz – Péče o dítě a finance; cssz.cz; z. č. 187/2006 Sb. § 21, § 32–37",
+    "url": "https://mpsv.gov.cz/pece-o-dite-a-finance"
+  },
+  "otcovska": {
+    "sazba": 0.7,
+    "dny": 14,
+    "nastupDoDne": 41,
+    "zdroj": "cssz.cz – Otcovská",
+    "url": "https://cssz.cz/otcovska"
+  },
+  "rodicovsky": [
+    {
+      "narozeniOd": "2026-01-01",
+      "celkem": 350000,
+      "celkemVicercata": 700000,
+      "minStrop": 15000,
+      "minStropVicercata": 30000,
+      "nasobekVicercata": 2,
+      "vekMesicu": 36,
+      "zdroj": "mpsv.gov.cz – Rodičovský příspěvek (ÚP ČR)",
+      "url": "https://mpsv.gov.cz/up-cz/rodicovsky-prispevek"
+    },
+    {
+      "narozeniOd": "2027-01-01",
+      "celkem": 400000,
+      "celkemVicercata": 800000,
+      "minStrop": 15000,
+      "minStropVicercata": 30000,
+      "nasobekVicercata": 2,
+      "vekMesicu": 36,
+      "pozn": "Novela zákona o státní sociální podpoře schválená Senátem 29. 7. 2026, pro děti narozené od 1. 1. 2027. Měsíční stropy se nemění.",
+      "zdroj": "mpsv.gov.cz – Senát schválil zvýšení rodičovského příspěvku na 400 000 korun",
+      "url": "https://mpsv.gov.cz/senat-schvalil-zvyseni-rodicovskeho-prispevku-na-400-000-korun-i-upravy-superdavky"
+    }
+  ],
+  "rpPodilDvz": 0.7,
+  "rpDnu": 30,
+  "rpZmenaMesicu": 3,
+  "jesleHodinMesicne": 92,
+  "cistaMzda": {
+    "2026": {
+      "sp": 0.071, "zp": 0.045, "dan": 0.15, "dan2": 0.23,
+      "hraniceDan2Mesic": 146901, "slevaMesic": 2570,
+      "zdroj": "mpsv.gov.cz – Sociální pojištění v roce 2026; financnisprava.gov.cz – Daňové novinky 2026; z. č. 592/1992 Sb.",
+      "url": "https://financnisprava.gov.cz/cs/financni-sprava/media-a-verejnost/tiskove-zpravy-gfr/tiskove-zpravy-2026/danove-novinky-pro-rok-2026"
+    }
+  },
+  "zdroje": [
+    { "nazev": "ČSSZ – Peněžitá pomoc v mateřství a dávky nemocenského pojištění", "url": "https://www.cssz.cz/cz/pojisteni-osvc/davky/davky-nemocenskeho-pojisteni.htm" },
+    { "nazev": "ČSSZ – Otcovská", "url": "https://cssz.cz/otcovska" },
+    { "nazev": "MPSV – Nemocenské pojištění v roce 2026 (redukční hranice)", "url": "https://mpsv.gov.cz/nemocenske-pojisteni" },
+    { "nazev": "e-Sbírka – Sdělení MPSV č. 185/2026 Sb. (redukční hranice 2027)", "url": "https://e-sbirka.gov.cz/sb/2026/185" },
+    { "nazev": "MPSV / ÚP ČR – Rodičovský příspěvek", "url": "https://mpsv.gov.cz/up-cz/rodicovsky-prispevek" },
+    { "nazev": "MPSV – Volba výše rodičovského příspěvku", "url": "https://mpsv.gov.cz/volba-vyse-rodicovskeho-prispevku" },
+    { "nazev": "MPSV – Senát schválil zvýšení rodičovského příspěvku na 400 000 Kč", "url": "https://mpsv.gov.cz/senat-schvalil-zvyseni-rodicovskeho-prispevku-na-400-000-korun-i-upravy-superdavky" },
+    { "nazev": "MPSV – Péče o dítě a finance", "url": "https://mpsv.gov.cz/pece-o-dite-a-finance" },
+    { "nazev": "Finanční správa – Daňové novinky pro rok 2026", "url": "https://financnisprava.gov.cz/cs/financni-sprava/media-a-verejnost/tiskove-zpravy-gfr/tiskove-zpravy-2026/danove-novinky-pro-rok-2026" }
+  ]
+}
