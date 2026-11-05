@@ -235,3 +235,39 @@ test('ROD-01: bez mateřské 9 000 Kč měsíčně → 37 měsíců (bře 2026 �
   assert.equal(plan.rp.vycerpano, 333000);
   assert.equal(plan.rp.propadne, 17000);
 });
+
+// ROD-02: souběžně s mateřskou náleží RP ve výši rozdílu, je-li vyšší (§ 30b odst. 3 ZSSP), od měsíce narození.
+const rpVMesici = (plan, index) => plan.mesice.find((m) => m.index === index)?.polozky.find((p) => p.typ === 'rp')?.castka;
+
+test('ROD-02: nízká mateřská (346 Kč/den) → RP 15 000 Kč doplácí rozdíl od měsíce narození', () => {
+  const plan = planRodiny({ terminPorodu: '2026-03-15', prijemMatka: 15000, kdoPpm: 'matka', otcovska: false, rpVyse: 15000 }, rules);
+  assert.equal(plan.matka.ppm.denni, 346);
+  assert.equal(rpVMesici(plan, -1), undefined, 'RP nikdy před narozením');
+  assert.equal(rpVMesici(plan, 0), 4274); // 15 000 − 31 × 346
+  assert.equal(rpVMesici(plan, 1), 4620); // 15 000 − 30 × 346
+  assert.equal(rpVMesici(plan, 5), 9810); // 15 000 − 15 × 346
+  assert.equal(rpVMesici(plan, 6), 15000);
+  assert.equal(plan.rp.odMesice, 0);
+  // měsíc se souběhem ukazuje obě položky
+  const m0 = plan.mesice.find((m) => m.index === 0);
+  assert.ok(m0.polozky.some((p) => p.typ === 'ppm') && m0.polozky.some((p) => p.typ === 'rp'));
+});
+
+test('ROD-02: mateřskou čerpá otec od 7. týdne → RP v měsíci narození celá, v dubnu rozdíl', () => {
+  const plan = planRodiny({
+    terminPorodu: '2026-03-15', prijemMatka: 0, narokMatka: false, prijemOtec: 50000,
+    kdoPpm: 'otec', otcovska: false, rpVyse: 34440,
+  }, rules);
+  assert.equal(plan.ppm.start, '2026-04-26');
+  assert.equal(plan.rp.strop, 34440);
+  assert.equal(rpVMesici(plan, 0), 34440);
+  assert.equal(rpVMesici(plan, 1), 28700); // 34 440 − 5 × 1 148
+});
+
+test('ROD-02: mateřská vyšší než zvolená RP → v měsících 0–5 žádná RP, čerpání od 6. měsíce', () => {
+  const plan = planRodiny({
+    terminPorodu: '2026-03-15', prijemMatka: 30000, prijemOtec: 40000, kdoPpm: 'matka', otcovska: false, rpVyse: 8000,
+  }, rules);
+  assert.equal(plan.rp.odMesice, 6);
+  for (let i = 0; i <= 5; i++) assert.equal(rpVMesici(plan, i), undefined, `RP v měsíci ${i}`);
+});

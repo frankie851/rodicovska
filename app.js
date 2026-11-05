@@ -107,10 +107,19 @@ function vykresliOsu() {
   obal.innerHTML = svgOsa(plan, { sirka });
 }
 
+const NAZEV_DAVKY = { ppm: 'mateřská', otcovska: 'otcovská', rp: 'rodičovská' };
+
 function vykresliTabulku() {
+  // V měsících se souběhem (např. mateřská + rodičovská ve výši rozdílu) se ukáže rozpad dávek.
+  const rozpad = (m) => {
+    const davky = m.polozky.filter((p) => p.typ !== 'mzda');
+    return davky.length > 1
+      ? `<br><small>${davky.map((p) => `${NAZEV_DAVKY[p.typ]} ${NF.format(p.castka)}`).map(esc).join(' + ')}</small>`
+      : '';
+  };
   $('#tabulka tbody').innerHTML = plan.mesice.map((m) => `<tr>
     <td>${esc(m.popis)}${m.index === 0 ? ' ★' : ''}</td>
-    <td>${NF.format(m.davky)}</td><td>${NF.format(m.mzdy)}</td><td><strong>${NF.format(m.celkem)}</strong></td></tr>`).join('');
+    <td>${NF.format(m.davky)}${rozpad(m)}</td><td>${NF.format(m.mzdy)}</td><td><strong>${NF.format(m.celkem)}</strong></td></tr>`).join('');
 }
 
 function dlazdice(nazev, hodnota, pozn = '', trida = '') {
@@ -152,7 +161,7 @@ function vykresliSouhrn() {
     ${radekDvz('Otcovská', plan.otec.otcovska)}
     ${plan.ppm ? `<li>Období mateřské: ${formatCz(plan.ppm.start)} – ${formatCz(plan.ppm.konec)}.</li>` : ''}
     <li>Strop rodičovské = max(${kc(stav.vicercata ? r.minStropVicercata : r.minStrop)}; ${stav.vicercata ? '2 × ' : ''}70 % × 30 × vyšší redukovaný DVZ rodičů) = ${kc(r.strop)} měsíčně.</li>
-    <li>Rodičovská se nevyplácí souběžně s mateřskou, začíná v kalendářním měsíci po jejím skončení. Čerpá se nejdéle do 3 let dítěte, zbytek propadne.</li>
+    <li>Souběžně s mateřskou náleží rodičovská jen ve výši rozdílu, je-li zvolená výše vyšší než mateřská za daný měsíc (§ 30b odst. 3 ZSSP). Čerpá se nejdéle do 3 let dítěte, zbytek propadne.</li>
     <li>Čistá mzda: sociální 7,1 %, zdravotní 4,5 %, daň 15 % po slevě na poplatníka. Daňové zvýhodnění na dítě ani další slevy se nepočítají.</li>
   </ul>`;
 }
@@ -170,8 +179,10 @@ function vykresliChecklist() {
   if (plan.otec.ppm) {
     polozky.push([`Od ${formatCz(plan.otec.ppm.datum)}`, 'Převzetí mateřské otcem: písemná dohoda s matkou a žádost o PPM přes zaměstnavatele. Nejdříve od 7. týdne po porodu, aspoň na 7 dní.']);
   }
+  const popisIso = (iso) => popisMesice(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)));
+  const mesicNarozeni = prvniDenMesice(B, 0);
   const zacatekRp = prvniDenMesice(B, plan.rp.odMesice);
-  polozky.push([`Od ${popisMesice(Number(zacatekRp.slice(0, 4)), Number(zacatekRp.slice(5, 7)))}`, `Rodičovský příspěvek: žádost na Úřadu práce ČR (online přes portál MPSV, datovou schránkou nebo osobně). Chcete-li víc než ${kc(plan.rp.minStrop)} měsíčně, přiložte Potvrzení o denním vyměřovacím základu od ČSSZ.`]);
+  polozky.push([`Od ${popisIso(mesicNarozeni)} (měsíc narození)`, `Rodičovský příspěvek: žádost na Úřadu práce ČR (online přes portál MPSV, datovou schránkou nebo osobně) lze podat hned po narození. Podle plánu náleží od ${popisIso(zacatekRp)}; výplatu lze uplatnit nejvýš 3 měsíce zpětně (§ 54 odst. 2 ZSSP), starší měsíce propadnou. Chcete-li víc než ${kc(plan.rp.minStrop)} měsíčně, přiložte Potvrzení o denním vyměřovacím základu od ČSSZ.`]);
   polozky.push(['Kdykoli během čerpání', `Výši rodičovské lze měnit jednou za ${rules.rpZmenaMesicu} měsíce, na písemnou žádost a ne zpětně.`]);
   if (plan.navratOd) {
     polozky.push([`Před ${formatCz(plan.navratOd)}`, `Návrat do práce domluvte se zaměstnavatelem. U dítěte do 2 let hlídejte limit ${rules.jesleHodinMesicne} hodin měsíčně v jeslích nebo školce.`]);

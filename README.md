@@ -92,7 +92,7 @@ průměrné mzdy / 12) a měsíční slevu na poplatníka. Nový rok doplňte po
 4. **Mateřská**: 28 týdnů (vícerčata 37), nástup 6–8 týdnů před termínem. Otec ji může převzít nejdříve od 7. týdne.
 5. **Otcovská**: 14 dní, nástup do 6 týdnů od narození.
 6. **Strop RP** = max(15 000 Kč; 70 % × 30 × vyšší redukovaný DVZ rodičů). U vícerčat 30 000 Kč a dvojnásobek.
-7. **Čerpání RP** začíná v kalendářním měsíci po skončení mateřské (bez mateřské v měsíci narození). Každý měsíc se zbývající částka sníží o zvolenou výši, nejdéle do konce kalendářního měsíce, v němž dítě dosáhne 3 let (měsíc 3. narozenin se počítá celý, § 30b odst. 1 písm. d) ZSSP). Zbytek **propadne**.
+7. **Čerpání RP** začíná v měsíci narození. V měsících, za které náleží mateřská, se vyplácí jen rozdíl mezi zvolenou výší a mateřskou, je-li zvolená výše vyšší (§ 30b odst. 3 ZSSP). Každý měsíc se zbývající částka sníží o vyplacenou částku, nejdéle do konce kalendářního měsíce, v němž dítě dosáhne 3 let (měsíc 3. narozenin se počítá celý, § 30b odst. 1 písm. d) ZSSP). Zbytek **propadne**.
 
 ### Porovnání s kalkulačkou MPSV
 
@@ -128,4 +128,4 @@ Mateřská 28 týdnů (196 dní), rozhodné období 365 dní:
 - Jen zaměstnanci. U OSVČ jsou jiné podmínky nároku i výpočtu.
 - Rodičovská má jednu měsíční výši po celou dobu (úřad dovolí změnu jednou za 3 měsíce).
 - Čistá mzda nezahrnuje daňové zvýhodnění na dítě ani další slevy a odpočty.
-- Výjimky jako souběh mateřské a rodičovské, jednorázová výplata při narození dalšího dítěte nebo převzetí dítěte do péče se nepočítají, jen se zmiňují v kontrolním seznamu.
+- Výjimky jako jednorázová výplata při narození dalšího dítěte nebo převzetí dítěte do péče se nepočítají, jen se zmiňují v kontrolním seznamu.

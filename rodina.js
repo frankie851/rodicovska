@@ -122,14 +122,18 @@ export function stropRp({ redDvz = [], vicercata = false }, rp, rules) {
  * Čerpání RP po měsících věku dítěte (0 = měsíc narození, poslední = vekMesicu = měsíc 3. narozenin,
  * který se počítá celý – § 30b odst. 1 písm. d) ZSSP).
  * Zbývající částka klesá o měsíční výši, dokud není nula nebo neskončí měsíc 3. narozenin.
+ * `odecet(m)` = PPM vyplacená rodičům za měsíc m: RP pak náleží jen ve výši rozdílu, je-li vyšší
+ * (§ 30b odst. 3 ZSSP). Měsíce, za které RP nenáleží, se do `mesice` nezapisují.
  */
-export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36 }) {
+export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36, odecet = () => 0 }) {
   let zbyva = celkem;
   const mesice = [];
   let mesicVycerpani = null;
   if (mesicniVyse > 0) {
     for (let m = Math.max(0, odMesice); m <= vekMesicu && zbyva > 0; m++) {
-      const castka = Math.min(mesicniVyse, zbyva);
+      const naleziMesic = Math.max(0, mesicniVyse - (odecet(m) || 0));
+      if (naleziMesic <= 0) continue;
+      const castka = Math.min(naleziMesic, zbyva);
       zbyva -= castka;
       mesice.push({ mesic: m, castka });
       if (zbyva === 0) mesicVycerpani = m;
@@ -142,6 +146,18 @@ export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36 })
 export function navrhVyse(celkem, odMesice, vekMesicu = 36, krok = 100) {
   const mesicu = Math.max(1, vekMesicu - odMesice + 1);
   return Math.ceil(celkem / mesicu / krok) * krok;
+}
+
+/**
+ * Jako navrhVyse, ale se souběhem s PPM (`odecet`, § 30b odst. 3 ZSSP): nejnižší výše na stovky,
+ * se kterou se RP čerpaná od měsíce narození vyčerpá do konce měsíce 3. narozenin.
+ * Hledá nejvýš do `max`; když ani ta nestačí, vrátí null.
+ */
+export function navrhVyseSoubeh(celkem, odecet, vekMesicu, max, krok = 100) {
+  for (let vyse = navrhVyse(celkem, 0, vekMesicu, krok); vyse <= max; vyse += krok) {
+    if (cerpaniRp({ celkem, mesicniVyse: vyse, odMesice: 0, vekMesicu, odecet }).propadne === 0) return vyse;
+  }
+  return null;
 }
 
 // ---------- Orientační čistá mzda zaměstnance ----------
@@ -311,21 +327,27 @@ export function planRodiny(vstupy, rules) {
 
   // Rodičovský příspěvek
   const celkem = v.vicercata ? rp.celkemVicercata : rp.celkem;
-  const posledniPpm = [...mesice.values()].filter((m) => m.ppm.matka + m.ppm.otec > 0).map((m) => m.index).pop();
-  const rpOd = posledniPpm === undefined ? 0 : Math.max(0, posledniPpm + 1);
+  // RP náleží od měsíce narození; v měsících s PPM jen rozdíl, je-li vyšší (§ 30b odst. 3 ZSSP).
+  const ppmVMesici = (index) => {
+    const m = mesice.get(index);
+    if (!m) return 0;
+    return ['matka', 'otec'].reduce((s, kdo) => s + (m.ppm[kdo] ? m.ppm[kdo] * ppmInfo[kdo].denni : 0), 0);
+  };
   const dvzProRp = ['matka', 'otec'].map((kdo) => {
     if (ppmInfo[kdo]) return ppmInfo[kdo].redDvz;
     const info = davkaRodice(rules, kdo === 'matka' ? v.prijemMatka : v.prijemOtec, maNarok[kdo], B, P.sazba);
     return info ? info.redDvz : 0;
   });
   const strop = stropRp({ redDvz: dvzProRp, vicercata: v.vicercata }, rp, rules);
-  const navrh = Math.min(strop, navrhVyse(celkem, rpOd, vek));
+  const navrhProVycerpani = navrhVyseSoubeh(celkem, ppmVMesici, vek, strop);
+  const navrh = Math.min(strop, navrhProVycerpani ?? strop);
   let vyse = v.rpVyse == null || v.rpVyse === '' ? navrh : Number(v.rpVyse);
   if (vyse > strop) {
     varovani.push({ typ: 'nadStrop', uroven: 'pozor', text: `Zvolená výše přesahuje váš měsíční strop ${kc(strop)}, počítám se stropem.` });
     vyse = strop;
   }
-  const cerpani = cerpaniRp({ celkem, mesicniVyse: vyse, odMesice: rpOd, vekMesicu: vek });
+  const cerpani = cerpaniRp({ celkem, mesicniVyse: vyse, odMesice: 0, vekMesicu: vek, odecet: ppmVMesici });
+  const rpOd = cerpani.mesice.length ? cerpani.mesice[0].mesic : 0; // první měsíc, za který RP skutečně náleží
   const rpPoMesicich = new Map(cerpani.mesice.map((x) => [x.mesic, x.castka]));
 
   // Sestavení měsíců
@@ -373,8 +395,7 @@ export function planRodiny(vstupy, rules) {
   // Upozornění
   const mesicVycerpani = cerpani.mesicVycerpani;
   if (cerpani.propadne > 0) {
-    const navrhProVycerpani = navrhVyse(celkem, rpOd, vek);
-    const lze = navrhProVycerpani <= strop;
+    const lze = navrhProVycerpani != null && navrhProVycerpani <= strop;
     varovani.unshift({
       typ: 'propadnuti', uroven: 'pozor', castka: cerpani.propadne,
       text: `Do 3 let dítěte vyčerpáte jen ${kc(cerpani.vycerpano)}, zbylých ${kc(cerpani.propadne)} propadne. `
