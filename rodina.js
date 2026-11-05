@@ -308,7 +308,7 @@ export function planRodiny(vstupy, rules) {
     if (!maNarok.otec) {
       varovani.push({ typ: 'otcovskaBezNaroku', uroven: 'pozor', text: 'Otec nemá podle zadání příjem z pojištěného zaměstnání, otcovská se nepočítá.' });
     } else {
-      const odDne = Math.min(P.otecOdDne - 14, Math.max(0, Number(v.otcovskaOdDne) || 0));
+      const odDne = Math.min(rules.otcovska.nastupDoDne, Math.max(0, Number(v.otcovskaOdDne) || 0)); // § 38a odst. 4 ZNP: den 0–41
       const start = pridejDny(B, odDne);
       otcovska = {
         start, konec: pridejDny(start, rules.otcovska.dny - 1),

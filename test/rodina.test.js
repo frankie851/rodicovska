@@ -361,3 +361,17 @@ test('ROD-06: záznam RP od 1. 1. 2027 cituje zákon č. 152/2026 Sb.', () => {
   const plan = planRodiny({ terminPorodu: '2027-04-04' }, rules);
   assert.match(plan.varovani.find((x) => x.typ === 'novela400').text, /152\/2026 Sb\./);
 });
+
+// ROD-09: nástup na otcovskou je možný v období 6 týdnů ode dne narození, tj. den 0–41 (§ 38a odst. 4 ZNP).
+test('ROD-09: otcovská může začít až 41. den po porodu', () => {
+  const zaklad = { terminPorodu: '2026-03-15', prijemMatka: 30000, prijemOtec: 30000, kdoPpm: 'matka', otcovska: true };
+  assert.equal(planRodiny({ ...zaklad, otcovskaOdDne: 35 }, rules).otec.otcovska.start, '2026-04-19');
+  const p41 = planRodiny({ ...zaklad, otcovskaOdDne: 41 }, rules);
+  assert.equal(p41.otec.otcovska.start, '2026-04-25');
+  assert.equal(p41.otec.otcovska.konec, '2026-05-08');
+  assert.equal(p41.souhrn.otcovska, 14 * 691);
+  assert.equal(planRodiny({ ...zaklad, otcovskaOdDne: 42 }, rules).otec.otcovska.start, '2026-04-25');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const tag = html.match(/<input[^>]*name="otcovskaOdDne"[^>]*>/)[0];
+  assert.match(tag, new RegExp(`max="${rules.otcovska.nastupDoDne}"`));
+});

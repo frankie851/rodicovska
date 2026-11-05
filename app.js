@@ -280,6 +280,7 @@ async function start() {
   $('#overeno').textContent = formatCz(rules.overeno);
   $('#zdroje').innerHTML = rules.zdroje.map((z) => `<li><a href="${esc(z.url)}" rel="noopener" target="_blank">${esc(z.nazev)}</a></li>`).join('');
 
+  form().elements.otcovskaOdDne.max = String(rules.otcovska.nastupDoDne);
   pripravChyboveHlasky();
   vyplnFormular();
   prectiFormular();
