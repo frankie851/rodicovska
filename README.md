@@ -56,7 +56,9 @@ redukčních hranic…“). Najdete ho na [e-sbirka.gov.cz](https://e-sbirka.gov
 ```
 
 Dokud rok chybí, aplikace použije poslední známý rok a zobrazí upozornění. Hranice se vybírají podle
-**data nástupu na dávku**, ne podle data porodu.
+**data nástupu na dávku**, ne podle data porodu, ale jen do 31. 12. Trvá-li mateřská nebo otcovská i 1. ledna,
+od tohoto dne se dávka přepočítá podle hranic nového roku (DVZ zůstává, § 22 odst. 2 ZNP). Strop
+rodičovského příspěvku se počítá z DVZ redukovaného hranicemi roku narození dítěte (§ 30 odst. 3 ZSSP).
 
 ### 2. Rodičovský příspěvek (při změně zákona o státní sociální podpoře)
 
@@ -66,11 +68,11 @@ Pole `rodicovsky` obsahuje záznamy podle data narození dítěte (`narozeniOd`)
 - `celkem`, `celkemVicercata`: celková částka
 - `minStrop`, `minStropVicercata`: měsíční maximum bez DVZ nebo s nízkým DVZ (15 000 / 30 000 Kč)
 - `nasobekVicercata`: násobek stropu podle DVZ u vícerčat (od 2026 je to 2)
-- `vekMesicu`: do kdy se čerpá (36 = do 3 let)
+- `vekMesicu`: do kdy se čerpá (36 = včetně měsíce 3. narozenin, § 30b odst. 1 písm. d) ZSSP)
 - `pozn`: volitelná poznámka, zobrazí se jako informace
 
 Aktuálně: 350 000 / 700 000 Kč pro děti narozené od 1. 1. 2026 a 400 000 / 800 000 Kč pro děti
-narozené od 1. 1. 2027 (novela schválená Senátem 29. 7. 2026). Až vyjde ve Sbírce, doplňte do `zdroj` číslo zákona.
+narozené od 1. 1. 2027 (zákon č. 152/2026 Sb., účinný od 1. 1. 2027).
 
 ### 3. Čistá mzda (každý rok)
 
@@ -92,7 +94,7 @@ průměrné mzdy / 12) a měsíční slevu na poplatníka. Nový rok doplňte po
 4. **Mateřská**: 28 týdnů (vícerčata 37), nástup 6–8 týdnů před termínem. Otec ji může převzít nejdříve od 7. týdne.
 5. **Otcovská**: 14 dní, nástup do 6 týdnů od narození.
 6. **Strop RP** = max(15 000 Kč; 70 % × 30 × vyšší redukovaný DVZ rodičů). U vícerčat 30 000 Kč a dvojnásobek.
-7. **Čerpání RP** začíná v kalendářním měsíci po skončení mateřské (bez mateřské v měsíci narození). Každý měsíc se zbývající částka sníží o zvolenou výši, nejdéle do konce 35. měsíce věku dítěte. Zbytek **propadne**.
+7. **Čerpání RP** začíná v měsíci narození. V měsících, za které náleží mateřská, se vyplácí jen rozdíl mezi zvolenou výší a mateřskou, je-li zvolená výše vyšší (§ 30b odst. 3 ZSSP). Každý měsíc se zbývající částka sníží o vyplacenou částku, nejdéle do konce kalendářního měsíce, v němž dítě dosáhne 3 let (měsíc 3. narozenin se počítá celý, § 30b odst. 1 písm. d) ZSSP). Zbývá-li méně než částka za daný měsíc, vyplatí se zbytek spolu s ní (§ 30 odst. 6 ZSSP). Co se nevyčerpá, **propadne**.
 
 ### Porovnání s kalkulačkou MPSV
 
@@ -118,7 +120,7 @@ Mateřská 28 týdnů (196 dní), rozhodné období 365 dní:
 | 150 000 Kč | 2026 | 4 931,51 | 2 857 (max) | 2 000 | 392 000 | 59 997 |
 | 50 000 Kč | 2027 | 1 643,84 | 1 644 | 1 151 | 225 596 | 34 524 |
 | 80 000 Kč | 2027 | 2 630,14 | 2 254 | 1 578 | 309 288 | 47 334 |
-| 150 000 Kč | 2027 | 4 931,51 | 2 944 (max) | 2 061 | 403 956 | 61 824 |
+| 150 000 Kč | 2027 | 4 931,51 | 2 944 | 2 061 | 403 956 | 61 824 |
 
 Řádky 2026 se shodují s kalkulačkou MPSV.
 
@@ -128,4 +130,4 @@ Mateřská 28 týdnů (196 dní), rozhodné období 365 dní:
 - Jen zaměstnanci. U OSVČ jsou jiné podmínky nároku i výpočtu.
 - Rodičovská má jednu měsíční výši po celou dobu (úřad dovolí změnu jednou za 3 měsíce).
 - Čistá mzda nezahrnuje daňové zvýhodnění na dítě ani další slevy a odpočty.
-- Výjimky jako souběh mateřské a rodičovské, jednorázová výplata při narození dalšího dítěte nebo převzetí dítěte do péče se nepočítají, jen se zmiňují v kontrolním seznamu.
+- Výjimky jako jednorázová výplata při narození dalšího dítěte nebo převzetí dítěte do péče se nepočítají, jen se zmiňují v kontrolním seznamu.

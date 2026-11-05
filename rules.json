@@ -36,8 +36,9 @@
     "sazba": 0.7,
     "dny": 14,
     "nastupDoDne": 41,
-    "zdroj": "cssz.cz – Otcovská",
-    "url": "https://cssz.cz/otcovska"
+    "zdroj": "ČSSZ – Otcovská (cssz.gov.cz)",
+    "url": "https://www.cssz.gov.cz/web/cz/otcovska",
+    "overeno": "2026-11-05"
   },
   "rodicovsky": [
     {
@@ -48,8 +49,10 @@
       "minStropVicercata": 30000,
       "nasobekVicercata": 2,
       "vekMesicu": 36,
-      "zdroj": "mpsv.gov.cz – Rodičovský příspěvek (ÚP ČR)",
-      "url": "https://mpsv.gov.cz/up-cz/rodicovsky-prispevek"
+      "zdroj": "mpsv.gov.cz – Rodičovský příspěvek (ÚP ČR); ZSSP (z. č. 117/1995 Sb.) § 30",
+      "url": "https://mpsv.gov.cz/up-cz/rodicovsky-prispevek",
+      "urlZakon": "https://www.zakonyprolidi.cz/cs/1995-117#p30",
+      "overeno": "2026-11-05"
     },
     {
       "narozeniOd": "2027-01-01",
@@ -59,31 +62,44 @@
       "minStropVicercata": 30000,
       "nasobekVicercata": 2,
       "vekMesicu": 36,
-      "pozn": "Novela zákona o státní sociální podpoře schválená Senátem 29. 7. 2026, pro děti narozené od 1. 1. 2027. Měsíční stropy se nemění.",
-      "zdroj": "mpsv.gov.cz – Senát schválil zvýšení rodičovského příspěvku na 400 000 korun",
-      "url": "https://mpsv.gov.cz/senat-schvalil-zvyseni-rodicovskeho-prispevku-na-400-000-korun-i-upravy-superdavky"
+      "pozn": "Zákon č. 152/2026 Sb., účinný od 1. 1. 2027, pro děti narozené od 1. 1. 2027. Měsíční stropy se nemění.",
+      "zdroj": "zákon č. 152/2026 Sb. (ZSSP § 30 odst. 1)",
+      "url": "https://www.zakonyprolidi.cz/cs/2026-152",
+      "overeno": "2026-11-05"
     }
   ],
   "rpPodilDvz": 0.7,
   "rpDnu": 30,
   "rpZmenaMesicu": 3,
-  "jesleHodinMesicne": 92,
+  "jesleHodinMesicne": 120,
+  "jesleHodinMesicneZdroj": "ZSSP (z. č. 117/1995 Sb.) § 31 odst. 3 písm. a) ve znění zákona č. 84/2025 Sb. (čl. III bod 3, účinnost 1. 5. 2025): do 120 hodin v kalendářním měsíci",
+  "jesleHodinMesicneUrl": "https://www.zakonyprolidi.cz/cs/1995-117#p31",
+  "jesleHodinMesicneUrlNovela": "https://www.zakonyprolidi.cz/cs/2025-84",
+  "jesleHodinMesicneOvereno": "2026-11-05",
   "cistaMzda": {
     "2026": {
       "sp": 0.071, "zp": 0.045, "dan": 0.15, "dan2": 0.23,
       "hraniceDan2Mesic": 146901, "slevaMesic": 2570,
       "zdroj": "mpsv.gov.cz – Sociální pojištění v roce 2026; financnisprava.gov.cz – Daňové novinky 2026; z. č. 592/1992 Sb.",
       "url": "https://financnisprava.gov.cz/cs/financni-sprava/media-a-verejnost/tiskove-zpravy-gfr/tiskove-zpravy-2026/danove-novinky-pro-rok-2026"
+    },
+    "2027": {
+      "sp": 0.071, "zp": 0.045, "dan": 0.15, "dan2": 0.23,
+      "hraniceDan2Mesic": 154989, "slevaMesic": 2570,
+      "zdroj": "NV č. 177/2026 Sb. (všeobecný vyměřovací základ 2025 48 900 Kč × koeficient 1,0565 = průměrná mzda 51 663 Kč; 36 × 51 663 / 12 = 154 989 Kč); sazby a sleva beze změny (z. č. 592/1992 Sb., z. č. 586/1992 Sb.)",
+      "url": "https://www.zakonyprolidi.cz/cs/2026-177",
+      "overeno": "2026-11-05"
     }
   },
   "zdroje": [
-    { "nazev": "ČSSZ – Peněžitá pomoc v mateřství a dávky nemocenského pojištění", "url": "https://www.cssz.cz/cz/pojisteni-osvc/davky/davky-nemocenskeho-pojisteni.htm" },
-    { "nazev": "ČSSZ – Otcovská", "url": "https://cssz.cz/otcovska" },
+    { "nazev": "ČSSZ – Peněžitá pomoc v mateřství a dávky nemocenského pojištění", "url": "https://www.cssz.gov.cz/web/cz/penezita-pomoc-v-materstvi", "overeno": "2026-11-05" },
+    { "nazev": "ČSSZ – Otcovská", "url": "https://www.cssz.gov.cz/web/cz/otcovska", "overeno": "2026-11-05" },
     { "nazev": "MPSV – Nemocenské pojištění v roce 2026 (redukční hranice)", "url": "https://mpsv.gov.cz/nemocenske-pojisteni" },
     { "nazev": "e-Sbírka – Sdělení MPSV č. 185/2026 Sb. (redukční hranice 2027)", "url": "https://e-sbirka.gov.cz/sb/2026/185" },
     { "nazev": "MPSV / ÚP ČR – Rodičovský příspěvek", "url": "https://mpsv.gov.cz/up-cz/rodicovsky-prispevek" },
+    { "nazev": "Zákon č. 117/1995 Sb., o státní sociální podpoře – § 30 (rodičovský příspěvek)", "url": "https://www.zakonyprolidi.cz/cs/1995-117#p30", "overeno": "2026-11-05" },
     { "nazev": "MPSV – Volba výše rodičovského příspěvku", "url": "https://mpsv.gov.cz/volba-vyse-rodicovskeho-prispevku" },
-    { "nazev": "MPSV – Senát schválil zvýšení rodičovského příspěvku na 400 000 Kč", "url": "https://mpsv.gov.cz/senat-schvalil-zvyseni-rodicovskeho-prispevku-na-400-000-korun-i-upravy-superdavky" },
+    { "nazev": "Zákon č. 152/2026 Sb. – zvýšení rodičovského příspěvku na 400 000 Kč od 1. 1. 2027", "url": "https://www.zakonyprolidi.cz/cs/2026-152" },
     { "nazev": "MPSV – Péče o dítě a finance", "url": "https://mpsv.gov.cz/pece-o-dite-a-finance" },
     { "nazev": "Finanční správa – Daňové novinky pro rok 2026", "url": "https://financnisprava.gov.cz/cs/financni-sprava/media-a-verejnost/tiskove-zpravy-gfr/tiskove-zpravy-2026/danove-novinky-pro-rok-2026" }
   ]

@@ -100,6 +100,24 @@ export function davkaRodice(rules, mesicniPrijem, narok, datumNaroku, sazba) {
   return { datum: datumNaroku, dny, dvz: d, redDvz: red, denni: denniDavka(red, sazba), hranice };
 }
 
+/**
+ * Denní dávka za den `iso`. DVZ zůstává z nástupu (§ 18 ZNP), ale od 1. ledna dalšího roku se dávka
+ * přepočítá podle redukčních hranic platných od tohoto dne (§ 22 odst. 2 ZNP).
+ */
+export function davkaVeDni(rules, info, iso, sazba) {
+  if (String(iso).slice(0, 4) === String(info.datum).slice(0, 4)) return info.denni;
+  const hranice = hraniceProDatum(rules, iso);
+  return denniDavka(redukovanyDvz(info.dvz, hranice, rules.ppm.redukce), sazba);
+}
+
+/** Údaje o přepočtené dávce od 1. 1. roku `rok` (pro výpis „Jak jsme počítali“). */
+export function davkaPoNovemRoce(rules, info, rok, sazba) {
+  const od = `${rok}-01-01`;
+  const hranice = hraniceProDatum(rules, od);
+  const red = redukovanyDvz(info.dvz, hranice, rules.ppm.redukce);
+  return { od, redDvz: red, denni: denniDavka(red, sazba), hranice };
+}
+
 // ---------- Rodičovský příspěvek ----------
 
 /** Pravidla RP podle data narození dítěte. */
@@ -119,17 +137,28 @@ export function stropRp({ redDvz = [], vicercata = false }, rp, rules) {
 }
 
 /**
- * Čerpání RP po měsících věku dítěte (0 = měsíc narození, poslední = vekMesicu − 1).
- * Zbývající částka klesá o měsíční výši, dokud není nula nebo dítěti nejsou 3 roky.
+ * Čerpání RP po měsících věku dítěte (0 = měsíc narození, poslední = vekMesicu = měsíc 3. narozenin,
+ * který se počítá celý – § 30b odst. 1 písm. d) ZSSP).
+ * Zbývající částka klesá o měsíční výši, dokud není nula nebo neskončí měsíc 3. narozenin.
+ * `odecet(m)` = PPM vyplacená rodičům za měsíc m: RP pak náleží jen ve výši rozdílu, je-li vyšší
+ * (§ 30b odst. 3 ZSSP). Měsíce, za které RP nenáleží, se do `mesice` nezapisují.
+ * Nižší zbytek se nevyplácí jako další měsíc, ale spolu s poslední částkou (§ 30 odst. 6 ZSSP).
  */
-export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36 }) {
+export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36, odecet = () => 0 }) {
   let zbyva = celkem;
   const mesice = [];
   let mesicVycerpani = null;
   if (mesicniVyse > 0) {
-    for (let m = Math.max(0, odMesice); m < vekMesicu && zbyva > 0; m++) {
-      const castka = Math.min(mesicniVyse, zbyva);
+    for (let m = Math.max(0, odMesice); m <= vekMesicu && zbyva > 0; m++) {
+      const naleziMesic = Math.max(0, mesicniVyse - (odecet(m) || 0));
+      if (naleziMesic <= 0) continue;
+      let castka = Math.min(naleziMesic, zbyva);
       zbyva -= castka;
+      // Zbývá-li méně než částka za aktuální měsíc, vyplatí se zbytek spolu s ní (§ 30 odst. 6 ZSSP).
+      if (zbyva > 0 && zbyva < castka) {
+        castka += zbyva;
+        zbyva = 0;
+      }
       mesice.push({ mesic: m, castka });
       if (zbyva === 0) mesicVycerpani = m;
     }
@@ -137,10 +166,22 @@ export function cerpaniRp({ celkem, mesicniVyse, odMesice = 0, vekMesicu = 36 })
   return { mesice, vycerpano: celkem - zbyva, propadne: zbyva, mesicVycerpani };
 }
 
-/** Nejnižší měsíční výše (na stovky nahoru), se kterou se RP vyčerpá do 3 let. */
+/** Nejnižší měsíční výše (na stovky nahoru), se kterou se RP vyčerpá do 3 let (měsíce odMesice až vekMesicu včetně). */
 export function navrhVyse(celkem, odMesice, vekMesicu = 36, krok = 100) {
-  const mesicu = Math.max(1, vekMesicu - odMesice);
+  const mesicu = Math.max(1, vekMesicu - odMesice + 1);
   return Math.ceil(celkem / mesicu / krok) * krok;
+}
+
+/**
+ * Jako navrhVyse, ale se souběhem s PPM (`odecet`, § 30b odst. 3 ZSSP): nejnižší výše na stovky,
+ * se kterou se RP čerpaná od měsíce narození vyčerpá do konce měsíce 3. narozenin.
+ * Hledá nejvýš do `max`; když ani ta nestačí, vrátí null.
+ */
+export function navrhVyseSoubeh(celkem, odecet, vekMesicu, max, krok = 100) {
+  for (let vyse = navrhVyse(celkem, 0, vekMesicu, krok); vyse <= max; vyse += krok) {
+    if (cerpaniRp({ celkem, mesicniVyse: vyse, odMesice: 0, vekMesicu, odecet }).propadne === 0) return vyse;
+  }
+  return null;
 }
 
 // ---------- Orientační čistá mzda zaměstnance ----------
@@ -192,7 +233,8 @@ export function planRodiny(vstupy, rules) {
   const v = { ...VYCHOZI_VSTUP, ...vstupy };
   const varovani = [];
   const B = v.terminPorodu;
-  const vek = 36;
+  const rp = pravidlaRp(rules, B);
+  const vek = rp.vekMesicu; // měsíc 3. narozenin (index 36) je poslední měsíc čerpání
   const P = rules.ppm;
   const sestinedeli = pridejDny(B, P.otecOdDne);
   const ppmDny = 7 * (v.vicercata ? P.tydnyVicercata : P.tydny);
@@ -266,18 +308,22 @@ export function planRodiny(vstupy, rules) {
     if (!maNarok.otec) {
       varovani.push({ typ: 'otcovskaBezNaroku', uroven: 'pozor', text: 'Otec nemá podle zadání příjem z pojištěného zaměstnání, otcovská se nepočítá.' });
     } else {
-      const odDne = Math.min(P.otecOdDne - 14, Math.max(0, Number(v.otcovskaOdDne) || 0));
+      const odDne = Math.min(rules.otcovska.nastupDoDne, Math.max(0, Number(v.otcovskaOdDne) || 0)); // § 38a odst. 4 ZNP: den 0–41
       const start = pridejDny(B, odDne);
       otcovska = {
         start, konec: pridejDny(start, rules.otcovska.dny - 1),
         ...davkaRodice(rules, v.prijemOtec, true, start, rules.otcovska.sazba),
       };
+      const rokKonce = Number(otcovska.konec.slice(0, 4));
+      if (rokKonce > Number(start.slice(0, 4))) {
+        otcovska.poNovemRoce = davkaPoNovemRoce(rules, otcovska, rokKonce, rules.otcovska.sazba);
+      }
     }
   }
 
   // Den po dni: kdo pobírá mateřskou, kdo pracuje
   const startHorizontu = prvniDenMesice(ppm && ppm.start < B ? ppm.start : B);
-  const konecHorizontu = pridejDny(prvniDenMesice(B, vek), -1);
+  const konecHorizontu = pridejDny(prvniDenMesice(B, vek + 1), -1); // poslední den měsíce 3. narozenin
   const mesice = new Map();
   const ppmInfo = { matka: null, otec: null };
   for (let ms = parseDatum(startHorizontu); ms <= parseDatum(konecHorizontu); ms += DEN_MS) {
@@ -287,7 +333,8 @@ export function planRodiny(vstupy, rules) {
       const d = new Date(ms);
       mesice.set(index, {
         index, rok: d.getUTCFullYear(), mesic: d.getUTCMonth() + 1,
-        ppm: { matka: 0, otec: 0 }, otc: 0, prace: { matka: 0, otec: 0 }, pecuje: null,
+        ppm: { matka: 0, otec: 0 }, ppmKc: { matka: 0, otec: 0 }, otc: 0, otcKc: 0,
+        prace: { matka: 0, otec: 0 }, pecuje: null,
       });
     }
     const m = mesice.get(index);
@@ -299,32 +346,47 @@ export function planRodiny(vstupy, rules) {
         const prijem = kdo === 'matka' ? v.prijemMatka : v.prijemOtec;
         ppmInfo[kdo] = davkaRodice(rules, prijem, true, iso, P.sazba);
       }
+      const info = ppmInfo[kdo];
+      if (!info.poNovemRoce && iso.slice(0, 4) !== info.datum.slice(0, 4)) {
+        info.poNovemRoce = davkaPoNovemRoce(rules, info, Number(iso.slice(0, 4)), P.sazba);
+      }
       m.ppm[kdo]++;
+      m.ppmKc[kdo] += davkaVeDni(rules, info, iso, P.sazba);
     }
     const naOtcovske = otcovska && iso >= otcovska.start && iso <= otcovska.konec;
-    if (naOtcovske) m.otc++;
+    if (naOtcovske) {
+      m.otc++;
+      m.otcKc += davkaVeDni(rules, otcovska, iso, rules.otcovska.sazba);
+    }
     if (kdo !== 'matka' && v.prijemMatka > 0) m.prace.matka++;
     if (kdo !== 'otec' && !naOtcovske && v.prijemOtec > 0) m.prace.otec++;
   }
 
   // Rodičovský příspěvek
-  const rp = pravidlaRp(rules, B);
   const celkem = v.vicercata ? rp.celkemVicercata : rp.celkem;
-  const posledniPpm = [...mesice.values()].filter((m) => m.ppm.matka + m.ppm.otec > 0).map((m) => m.index).pop();
-  const rpOd = posledniPpm === undefined ? 0 : Math.max(0, posledniPpm + 1);
+  // RP náleží od měsíce narození; v měsících s PPM jen rozdíl, je-li vyšší (§ 30b odst. 3 ZSSP).
+  const ppmVMesici = (index) => {
+    const m = mesice.get(index);
+    if (!m) return 0;
+    return m.ppmKc.matka + m.ppmKc.otec;
+  };
+  // Strop RP z DVZ stanoveného k datu narození (§ 30 odst. 3 písm. b) ZSSP): u rodiče na PPM jeho DVZ
+  // redukovaný hranicemi roku narození dítěte.
   const dvzProRp = ['matka', 'otec'].map((kdo) => {
-    if (ppmInfo[kdo]) return ppmInfo[kdo].redDvz;
+    if (ppmInfo[kdo]) return redukovanyDvz(ppmInfo[kdo].dvz, hraniceProDatum(rules, B), P.redukce);
     const info = davkaRodice(rules, kdo === 'matka' ? v.prijemMatka : v.prijemOtec, maNarok[kdo], B, P.sazba);
     return info ? info.redDvz : 0;
   });
   const strop = stropRp({ redDvz: dvzProRp, vicercata: v.vicercata }, rp, rules);
-  const navrh = Math.min(strop, navrhVyse(celkem, rpOd, vek));
+  const navrhProVycerpani = navrhVyseSoubeh(celkem, ppmVMesici, vek, strop);
+  const navrh = Math.min(strop, navrhProVycerpani ?? strop);
   let vyse = v.rpVyse == null || v.rpVyse === '' ? navrh : Number(v.rpVyse);
   if (vyse > strop) {
     varovani.push({ typ: 'nadStrop', uroven: 'pozor', text: `Zvolená výše přesahuje váš měsíční strop ${kc(strop)}, počítám se stropem.` });
     vyse = strop;
   }
-  const cerpani = cerpaniRp({ celkem, mesicniVyse: vyse, odMesice: rpOd, vekMesicu: vek });
+  const cerpani = cerpaniRp({ celkem, mesicniVyse: vyse, odMesice: 0, vekMesicu: vek, odecet: ppmVMesici });
+  const rpOd = cerpani.mesice.length ? cerpani.mesice[0].mesic : 0; // první měsíc, za který RP skutečně náleží
   const rpPoMesicich = new Map(cerpani.mesice.map((x) => [x.mesic, x.castka]));
 
   // Sestavení měsíců
@@ -334,9 +396,9 @@ export function planRodiny(vstupy, rules) {
     if (m.pecuje) posledniPecujici = m.pecuje;
     const polozky = [];
     for (const kdo of ['matka', 'otec']) {
-      if (m.ppm[kdo]) polozky.push({ typ: 'ppm', kdo, dni: m.ppm[kdo], castka: m.ppm[kdo] * ppmInfo[kdo].denni });
+      if (m.ppm[kdo]) polozky.push({ typ: 'ppm', kdo, dni: m.ppm[kdo], castka: m.ppmKc[kdo] });
     }
-    if (m.otc) polozky.push({ typ: 'otcovska', kdo: 'otec', dni: m.otc, castka: m.otc * otcovska.denni });
+    if (m.otc) polozky.push({ typ: 'otcovska', kdo: 'otec', dni: m.otc, castka: m.otcKc });
     if (rpPoMesicich.has(m.index)) polozky.push({ typ: 'rp', kdo: posledniPecujici, castka: rpPoMesicich.get(m.index) });
     const dim = dnuVMesici(m.rok, m.mesic);
     const pm = parametryMzdy(rules, m.rok);
@@ -372,8 +434,7 @@ export function planRodiny(vstupy, rules) {
   // Upozornění
   const mesicVycerpani = cerpani.mesicVycerpani;
   if (cerpani.propadne > 0) {
-    const navrhProVycerpani = navrhVyse(celkem, rpOd, vek);
-    const lze = navrhProVycerpani <= strop;
+    const lze = navrhProVycerpani != null && navrhProVycerpani <= strop;
     varovani.unshift({
       typ: 'propadnuti', uroven: 'pozor', castka: cerpani.propadne,
       text: `Do 3 let dítěte vyčerpáte jen ${kc(cerpani.vycerpano)}, zbylých ${kc(cerpani.propadne)} propadne. `
@@ -382,7 +443,8 @@ export function planRodiny(vstupy, rules) {
           : `Ani při maximální výši ${kc(strop)} se celá částka do 3 let nevyčerpá.`),
     });
   }
-  const pouziteHranice = [ppmInfo.matka, ppmInfo.otec, otcovska].filter(Boolean).map((x) => x.hranice);
+  const pouziteHranice = [ppmInfo.matka, ppmInfo.otec, otcovska].filter(Boolean)
+    .flatMap((x) => [x.hranice, x.poNovemRoce?.hranice]).filter(Boolean);
   const odhadHranice = pouziteHranice.find((h) => h.odhad);
   if (odhadHranice) {
     varovani.push({ typ: 'odhadHranice', uroven: 'info', text: `Redukční hranice pro požadovaný rok ještě nejsou v rules.json, použity hodnoty roku ${odhadHranice.rok}.` });
@@ -414,6 +476,51 @@ export function planRodiny(vstupy, rules) {
     souhrn,
     varovani,
   };
+}
+
+// ---------- Kontrola vstupů formuláře (bez DOM) ----------
+
+/**
+ * Přečte částku v Kč zadanou jako text: mezery (i nezlomitelné) se ignorují, desetinná čárka nebo tečka,
+ * nejvýš 2 desetinná místa. Vrací { hodnota } nebo { chyba: 'prazdne' | 'zaporne' | 'necitelne' }.
+ */
+export function prectiCastku(text) {
+  if (typeof text === 'number') {
+    if (!Number.isFinite(text)) return { chyba: 'necitelne' };
+    return text < 0 ? { chyba: 'zaporne' } : { hodnota: text };
+  }
+  const s = String(text ?? '').replace(/[\s\u00a0\u202f]/g, '').replace(',', '.');
+  if (s === '') return { chyba: 'prazdne' };
+  if (/^-\d/.test(s)) return { chyba: 'zaporne' };
+  if (!/^\d+(\.\d{1,2})?$/.test(s)) return { chyba: 'necitelne' };
+  return { hodnota: Number(s) };
+}
+
+const TEXT_CHYBY_PRIJMU = {
+  prazdne: 'Zadejte příjem v Kč. Bez příjmu zadejte 0.',
+  zaporne: 'Příjem nemůže být záporný.',
+  necitelne: 'Příjem zadejte jako číslo v Kč, například 30 000 nebo 30 000,50.',
+};
+
+/**
+ * Zkontroluje hodnoty z formuláře. Vrací { vstup, chyby }: `chyby` je objekt pole → text chyby
+ * (prázdný = vše v pořádku), `vstup` jsou hodnoty s přečtenými čísly připravené pro planRodiny.
+ */
+export function overVstup(hodnoty, rules) {
+  const chyby = {};
+  const vstup = { ...hodnoty };
+  const min = [...rules.rodicovsky].map((r) => r.narozeniOd).sort()[0];
+  const t = String(hodnoty.terminPorodu ?? '');
+  const platneDatum = /^\d{4}-\d{2}-\d{2}$/.test(t) && formatIso(parseDatum(t)) === t;
+  if (!platneDatum || t < min) {
+    chyby.terminPorodu = `Zadejte termín porodu od ${formatCz(min)}. Pro dřívější narození platí jiná pravidla.`;
+  }
+  for (const pole of ['prijemMatka', 'prijemOtec']) {
+    const r = prectiCastku(hodnoty[pole]);
+    if (r.chyba) chyby[pole] = TEXT_CHYBY_PRIJMU[r.chyba];
+    else vstup[pole] = r.hodnota;
+  }
+  return { vstup, chyby };
 }
 
 export function formatCz(iso) {

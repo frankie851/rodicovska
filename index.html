@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rodičovská pro celou rodinu</title>
   <meta name="description" content="Orientační plánovač mateřské, otcovské a rodičovského příspěvku po měsících do 3 let dítěte.">
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="app.js"></script>
 </head>
@@ -38,12 +39,12 @@
           <legend>Hrubý měsíční příjem (průměr za posledních 12 měsíců)</legend>
           <div class="mrizka">
             <label class="pole">
-              <span>Matka (Kč)</span>
-              <input type="number" name="prijemMatka" min="0" step="100" inputmode="numeric">
+              <span>Matka (Kč, bez příjmu = 0)</span>
+              <input type="text" name="prijemMatka" inputmode="decimal" autocomplete="off">
             </label>
             <label class="pole">
-              <span>Otec (Kč)</span>
-              <input type="number" name="prijemOtec" min="0" step="100" inputmode="numeric">
+              <span>Otec (Kč, bez příjmu = 0)</span>
+              <input type="text" name="prijemOtec" inputmode="decimal" autocomplete="off">
             </label>
             <label class="pole zaskrt">
               <input type="checkbox" name="narokMatka">
@@ -82,7 +83,7 @@
             </label>
             <label class="pole">
               <span>Otcovská od (dní po porodu)</span>
-              <input type="number" name="otcovskaOdDne" min="0" max="28" step="1" inputmode="numeric">
+              <input type="number" name="otcovskaOdDne" min="0" max="41" step="1" inputmode="numeric">
             </label>
           </div>
         </fieldset>

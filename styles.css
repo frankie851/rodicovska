@@ -105,7 +105,7 @@ legend { font-weight: 600; padding: 0; margin-bottom: 8px; }
 .pole.zaskrt > span { color: var(--text); font-size: 0.95rem; }
 .pole.zaskrt input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
 
-input[type="number"], input[type="date"], select {
+input[type="number"], input[type="text"], input[type="date"], select {
   width: 100%;
   min-width: 0;
   font: inherit;
@@ -181,6 +181,9 @@ summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
 .checklist .kdy { font-weight: 700; }
 
 .chyba { color: var(--pozor-okraj); font-weight: 600; }
+.chyba-pole { color: var(--pozor-okraj); font-weight: 600; font-size: 0.9rem; }
+.chyba-pole:empty { display: none; }
+input[aria-invalid="true"] { border-color: var(--pozor-okraj); outline: 2px solid var(--pozor-okraj); outline-offset: 0; }
 
 .paticka { border-top: 1px solid var(--okraj); padding: 16px 0 32px; font-size: 0.9rem; color: var(--text-2); }
 .paticka strong { color: var(--text); }
