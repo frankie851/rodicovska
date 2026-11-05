@@ -59,9 +59,10 @@
       "minStropVicercata": 30000,
       "nasobekVicercata": 2,
       "vekMesicu": 36,
-      "pozn": "Novela zákona o státní sociální podpoře schválená Senátem 29. 7. 2026, pro děti narozené od 1. 1. 2027. Měsíční stropy se nemění.",
-      "zdroj": "mpsv.gov.cz – Senát schválil zvýšení rodičovského příspěvku na 400 000 korun",
-      "url": "https://mpsv.gov.cz/senat-schvalil-zvyseni-rodicovskeho-prispevku-na-400-000-korun-i-upravy-superdavky"
+      "pozn": "Zákon č. 152/2026 Sb., účinný od 1. 1. 2027, pro děti narozené od 1. 1. 2027. Měsíční stropy se nemění.",
+      "zdroj": "zákon č. 152/2026 Sb. (ZSSP § 30 odst. 1)",
+      "url": "https://www.zakonyprolidi.cz/cs/2026-152",
+      "overeno": "2026-11-05"
     }
   ],
   "rpPodilDvz": 0.7,
@@ -87,7 +88,7 @@
     { "nazev": "e-Sbírka – Sdělení MPSV č. 185/2026 Sb. (redukční hranice 2027)", "url": "https://e-sbirka.gov.cz/sb/2026/185" },
     { "nazev": "MPSV / ÚP ČR – Rodičovský příspěvek", "url": "https://mpsv.gov.cz/up-cz/rodicovsky-prispevek" },
     { "nazev": "MPSV – Volba výše rodičovského příspěvku", "url": "https://mpsv.gov.cz/volba-vyse-rodicovskeho-prispevku" },
-    { "nazev": "MPSV – Senát schválil zvýšení rodičovského příspěvku na 400 000 Kč", "url": "https://mpsv.gov.cz/senat-schvalil-zvyseni-rodicovskeho-prispevku-na-400-000-korun-i-upravy-superdavky" },
+    { "nazev": "Zákon č. 152/2026 Sb. – zvýšení rodičovského příspěvku na 400 000 Kč od 1. 1. 2027", "url": "https://www.zakonyprolidi.cz/cs/2026-152" },
     { "nazev": "MPSV – Péče o dítě a finance", "url": "https://mpsv.gov.cz/pece-o-dite-a-finance" },
     { "nazev": "Finanční správa – Daňové novinky pro rok 2026", "url": "https://financnisprava.gov.cz/cs/financni-sprava/media-a-verejnost/tiskove-zpravy-gfr/tiskove-zpravy-2026/danove-novinky-pro-rok-2026" }
   ]

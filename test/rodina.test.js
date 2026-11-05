@@ -351,3 +351,13 @@ test('ROD-05 + ROD-02: zbytek se přičte i ke skutečné částce měsíce; ní
   assert.equal(plan.rp.vycerpano, 350000);
   assert.equal(rpVMesici(plan, 26), 15000 + 3128); // 350 000 − 31 872 (měsíce 0–5) − 21 × 15 000
 });
+
+// ROD-06: zvýšení na 400 000 / 800 000 Kč je zákon č. 152/2026 Sb. (účinnost 1. 1. 2027), ne „novela schválená Senátem“.
+test('ROD-06: záznam RP od 1. 1. 2027 cituje zákon č. 152/2026 Sb.', () => {
+  const r = rules.rodicovsky.find((x) => x.narozeniOd === '2027-01-01');
+  assert.match(r.zdroj, /152\/2026/);
+  assert.ok(/zakonyprolidi\.cz\/cs\/2026-152|e-sbirka\.gov\.cz\/sb\/2026\/152/.test(r.url), r.url);
+  assert.doesNotMatch(r.pozn, /Senát/);
+  const plan = planRodiny({ terminPorodu: '2027-04-04' }, rules);
+  assert.match(plan.varovani.find((x) => x.typ === 'novela400').text, /152\/2026 Sb\./);
+});

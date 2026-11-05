@@ -72,7 +72,7 @@ Pole `rodicovsky` obsahuje záznamy podle data narození dítěte (`narozeniOd`)
 - `pozn`: volitelná poznámka, zobrazí se jako informace
 
 Aktuálně: 350 000 / 700 000 Kč pro děti narozené od 1. 1. 2026 a 400 000 / 800 000 Kč pro děti
-narozené od 1. 1. 2027 (novela schválená Senátem 29. 7. 2026). Až vyjde ve Sbírce, doplňte do `zdroj` číslo zákona.
+narozené od 1. 1. 2027 (zákon č. 152/2026 Sb., účinný od 1. 1. 2027).
 
 ### 3. Čistá mzda (každý rok)
 
