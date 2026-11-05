@@ -478,6 +478,51 @@ export function planRodiny(vstupy, rules) {
   };
 }
 
+// ---------- Kontrola vstupů formuláře (bez DOM) ----------
+
+/**
+ * Přečte částku v Kč zadanou jako text: mezery (i nezlomitelné) se ignorují, desetinná čárka nebo tečka,
+ * nejvýš 2 desetinná místa. Vrací { hodnota } nebo { chyba: 'prazdne' | 'zaporne' | 'necitelne' }.
+ */
+export function prectiCastku(text) {
+  if (typeof text === 'number') {
+    if (!Number.isFinite(text)) return { chyba: 'necitelne' };
+    return text < 0 ? { chyba: 'zaporne' } : { hodnota: text };
+  }
+  const s = String(text ?? '').replace(/[\s\u00a0\u202f]/g, '').replace(',', '.');
+  if (s === '') return { chyba: 'prazdne' };
+  if (/^-\d/.test(s)) return { chyba: 'zaporne' };
+  if (!/^\d+(\.\d{1,2})?$/.test(s)) return { chyba: 'necitelne' };
+  return { hodnota: Number(s) };
+}
+
+const TEXT_CHYBY_PRIJMU = {
+  prazdne: 'Zadejte příjem v Kč. Bez příjmu zadejte 0.',
+  zaporne: 'Příjem nemůže být záporný.',
+  necitelne: 'Příjem zadejte jako číslo v Kč, například 30 000 nebo 30 000,50.',
+};
+
+/**
+ * Zkontroluje hodnoty z formuláře. Vrací { vstup, chyby }: `chyby` je objekt pole → text chyby
+ * (prázdný = vše v pořádku), `vstup` jsou hodnoty s přečtenými čísly připravené pro planRodiny.
+ */
+export function overVstup(hodnoty, rules) {
+  const chyby = {};
+  const vstup = { ...hodnoty };
+  const min = [...rules.rodicovsky].map((r) => r.narozeniOd).sort()[0];
+  const t = String(hodnoty.terminPorodu ?? '');
+  const platneDatum = /^\d{4}-\d{2}-\d{2}$/.test(t) && formatIso(parseDatum(t)) === t;
+  if (!platneDatum || t < min) {
+    chyby.terminPorodu = `Zadejte termín porodu od ${formatCz(min)}. Pro dřívější narození platí jiná pravidla.`;
+  }
+  for (const pole of ['prijemMatka', 'prijemOtec']) {
+    const r = prectiCastku(hodnoty[pole]);
+    if (r.chyba) chyby[pole] = TEXT_CHYBY_PRIJMU[r.chyba];
+    else vstup[pole] = r.hodnota;
+  }
+  return { vstup, chyby };
+}
+
 export function formatCz(iso) {
   const [y, m, d] = iso.split('-').map(Number);
   return `${d}. ${m}. ${y}`;

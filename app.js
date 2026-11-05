@@ -1,5 +1,5 @@
 import {
-  planRodiny, VYCHOZI_VSTUP, formatCz, pridejDny, prvniDenMesice, popisMesice,
+  planRodiny, VYCHOZI_VSTUP, formatCz, pridejDny, prvniDenMesice, popisMesice, overVstup,
 } from './rodina.js';
 import { svgOsa, TYPY } from './timeline.js';
 
@@ -12,6 +12,7 @@ const $ = (s) => document.querySelector(s);
 let rules = null;
 let stav = { ...VYCHOZI_VSTUP };
 let plan = null;
+let chyby = {};
 
 // ---------- localStorage (vždy v try/catch) ----------
 function nactiUlozeny() {
@@ -50,26 +51,82 @@ function vyplnFormular() {
   }
 }
 
-function prectiFormular() {
+// Pole, u nichž se ukazuje chybová hláška (kontejner s role="alert", propojený přes aria-describedby).
+function pripravChyboveHlasky() {
   for (const el of form().elements) {
-    if (!el.name || !(el.name in VYCHOZI_VSTUP)) continue;
-    if (el.type === 'checkbox') stav[el.name] = el.checked;
-    else if (el.type === 'number' || el.name === 'ppmTydnuPred') stav[el.name] = el.value === '' ? 0 : Number(el.value);
-    else stav[el.name] = el.value;
+    if (!el.name || !(el.name in VYCHOZI_VSTUP) || el.type === 'checkbox' || el.tagName === 'SELECT') continue;
+    const id = `chyba-${el.name}`;
+    if (document.getElementById(id)) continue;
+    const hlaska = document.createElement('span');
+    hlaska.id = id;
+    hlaska.className = 'chyba-pole';
+    hlaska.setAttribute('role', 'alert');
+    (el.closest('label') || el.parentElement).appendChild(hlaska);
+    el.setAttribute('aria-describedby', [el.getAttribute('aria-describedby'), id].filter(Boolean).join(' '));
   }
-  form().elements.ppmTydnuPred.disabled = stav.kdoPpm !== 'matka';
-  form().elements.otcovskaOdDne.disabled = !stav.otcovska;
-  form().elements.stridaniOdMesice.disabled = !stav.stridani;
-  form().elements.navratOdMesice.disabled = !stav.navrat;
+}
+
+function ukazChyby() {
+  for (const el of form().elements) {
+    const hlaska = el.name && document.getElementById(`chyba-${el.name}`);
+    if (!hlaska) continue;
+    const text = chyby[el.name] || '';
+    hlaska.textContent = text;
+    if (text) el.setAttribute('aria-invalid', 'true');
+    else el.removeAttribute('aria-invalid');
+  }
+}
+
+/** Číselná pole (type="number") kontroluje prohlížeč: nečitelná, prázdná nebo mimo rozsah hodnota je chyba. */
+function chybaCiselnehoPole(el) {
+  const v = el.validity;
+  if (v.badInput || v.rangeUnderflow || v.rangeOverflow || v.stepMismatch || el.value === '') {
+    return `Zadejte celé číslo od ${el.min} do ${el.max}.`;
+  }
+  return null;
+}
+
+function prectiFormular() {
+  const hodnoty = { ...stav };
+  const chybyCisel = {};
+  const el = form().elements;
+  el.ppmTydnuPred.disabled = el.kdoPpm.value !== 'matka';
+  el.otcovskaOdDne.disabled = !el.otcovska.checked;
+  el.stridaniOdMesice.disabled = !el.stridani.checked;
+  el.navratOdMesice.disabled = !el.navrat.checked;
+  for (const e of el) {
+    if (!e.name || !(e.name in VYCHOZI_VSTUP)) continue;
+    if (e.type === 'checkbox') hodnoty[e.name] = e.checked;
+    else if (e.type === 'number') {
+      const chyba = e.disabled ? null : chybaCiselnehoPole(e);
+      if (chyba) chybyCisel[e.name] = chyba;
+      else if (e.value !== '') hodnoty[e.name] = Number(e.value);
+    } else if (e.name === 'ppmTydnuPred') hodnoty[e.name] = Number(e.value);
+    else hodnoty[e.name] = e.value;
+  }
+  const vysledek = overVstup(hodnoty, rules);
+  chyby = { ...vysledek.chyby, ...chybyCisel };
+  // Do stavu (a tím do uloženého plánu) jdou jen platné hodnoty.
+  for (const [klic, hodnota] of Object.entries(vysledek.vstup)) {
+    if (!chyby[klic]) stav[klic] = hodnota;
+  }
+  ukazChyby();
 }
 
 // ---------- Vykreslení ----------
+/** Při chybném zadání nesmí pod hláškou zůstat výsledky předchozího plánu. */
+function vyprazdniVysledky() {
+  plan = null;
+  for (const s of ['#osa', '#souhrn', '#detail', '#tabulka tbody', '#checklist']) $(s).innerHTML = '';
+  $('#rpVyseText').textContent = '–';
+  $('#rpVyseInfo').textContent = '–';
+  const seznam = Object.values(chyby).map((t) => `<li class="pozor">${esc(t)}</li>`).join('');
+  $('#varovani').innerHTML = `<li class="pozor"><strong>Opravte zadání.</strong> Výsledky se ukážou, až budou všechna pole vyplněná správně.</li>${seznam}`;
+}
+
 function prepocitej() {
-  const min = [...rules.rodicovsky].map((r) => r.narozeniOd).sort()[0];
-  const varovani = $('#varovani');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(stav.terminPorodu || '') || stav.terminPorodu < min) {
-    varovani.innerHTML = `<li class="pozor"><strong>Zadejte termín porodu</strong> od ${formatCz(min)}. Pro dřívější narození platí jiná pravidla.</li>`;
-    $('#osa').innerHTML = '';
+  if (Object.keys(chyby).length) {
+    vyprazdniVysledky();
     return;
   }
   plan = planRodiny(stav, rules);
@@ -223,6 +280,7 @@ async function start() {
   $('#overeno').textContent = formatCz(rules.overeno);
   $('#zdroje').innerHTML = rules.zdroje.map((z) => `<li><a href="${esc(z.url)}" rel="noopener" target="_blank">${esc(z.nazev)}</a></li>`).join('');
 
+  pripravChyboveHlasky();
   vyplnFormular();
   prectiFormular();
   prepocitej();

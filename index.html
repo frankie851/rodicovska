@@ -38,12 +38,12 @@
           <legend>Hrubý měsíční příjem (průměr za posledních 12 měsíců)</legend>
           <div class="mrizka">
             <label class="pole">
-              <span>Matka (Kč)</span>
-              <input type="number" name="prijemMatka" min="0" step="100" inputmode="numeric">
+              <span>Matka (Kč, bez příjmu = 0)</span>
+              <input type="text" name="prijemMatka" inputmode="decimal" autocomplete="off">
             </label>
             <label class="pole">
-              <span>Otec (Kč)</span>
-              <input type="number" name="prijemOtec" min="0" step="100" inputmode="numeric">
+              <span>Otec (Kč, bez příjmu = 0)</span>
+              <input type="text" name="prijemOtec" inputmode="decimal" autocomplete="off">
             </label>
             <label class="pole zaskrt">
               <input type="checkbox" name="narokMatka">
