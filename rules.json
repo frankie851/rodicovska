@@ -36,8 +36,9 @@
     "sazba": 0.7,
     "dny": 14,
     "nastupDoDne": 41,
-    "zdroj": "cssz.cz – Otcovská",
-    "url": "https://cssz.cz/otcovska"
+    "zdroj": "ČSSZ – Otcovská (cssz.gov.cz)",
+    "url": "https://www.cssz.gov.cz/web/cz/otcovska",
+    "overeno": "2026-11-05"
   },
   "rodicovsky": [
     {
@@ -48,8 +49,10 @@
       "minStropVicercata": 30000,
       "nasobekVicercata": 2,
       "vekMesicu": 36,
-      "zdroj": "mpsv.gov.cz – Rodičovský příspěvek (ÚP ČR)",
-      "url": "https://mpsv.gov.cz/up-cz/rodicovsky-prispevek"
+      "zdroj": "mpsv.gov.cz – Rodičovský příspěvek (ÚP ČR); ZSSP (z. č. 117/1995 Sb.) § 30",
+      "url": "https://mpsv.gov.cz/up-cz/rodicovsky-prispevek",
+      "urlZakon": "https://www.zakonyprolidi.cz/cs/1995-117#p30",
+      "overeno": "2026-11-05"
     },
     {
       "narozeniOd": "2027-01-01",
@@ -82,11 +85,12 @@
     }
   },
   "zdroje": [
-    { "nazev": "ČSSZ – Peněžitá pomoc v mateřství a dávky nemocenského pojištění", "url": "https://www.cssz.cz/cz/pojisteni-osvc/davky/davky-nemocenskeho-pojisteni.htm" },
-    { "nazev": "ČSSZ – Otcovská", "url": "https://cssz.cz/otcovska" },
+    { "nazev": "ČSSZ – Peněžitá pomoc v mateřství a dávky nemocenského pojištění", "url": "https://www.cssz.gov.cz/web/cz/penezita-pomoc-v-materstvi", "overeno": "2026-11-05" },
+    { "nazev": "ČSSZ – Otcovská", "url": "https://www.cssz.gov.cz/web/cz/otcovska", "overeno": "2026-11-05" },
     { "nazev": "MPSV – Nemocenské pojištění v roce 2026 (redukční hranice)", "url": "https://mpsv.gov.cz/nemocenske-pojisteni" },
     { "nazev": "e-Sbírka – Sdělení MPSV č. 185/2026 Sb. (redukční hranice 2027)", "url": "https://e-sbirka.gov.cz/sb/2026/185" },
     { "nazev": "MPSV / ÚP ČR – Rodičovský příspěvek", "url": "https://mpsv.gov.cz/up-cz/rodicovsky-prispevek" },
+    { "nazev": "Zákon č. 117/1995 Sb., o státní sociální podpoře – § 30 (rodičovský příspěvek)", "url": "https://www.zakonyprolidi.cz/cs/1995-117#p30", "overeno": "2026-11-05" },
     { "nazev": "MPSV – Volba výše rodičovského příspěvku", "url": "https://mpsv.gov.cz/volba-vyse-rodicovskeho-prispevku" },
     { "nazev": "Zákon č. 152/2026 Sb. – zvýšení rodičovského příspěvku na 400 000 Kč od 1. 1. 2027", "url": "https://www.zakonyprolidi.cz/cs/2026-152" },
     { "nazev": "MPSV – Péče o dítě a finance", "url": "https://mpsv.gov.cz/pece-o-dite-a-finance" },

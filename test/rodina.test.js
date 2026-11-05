@@ -375,3 +375,14 @@ test('ROD-09: otcovská může začít až 41. den po porodu', () => {
   const tag = html.match(/<input[^>]*name="otcovskaOdDne"[^>]*>/)[0];
   assert.match(tag, new RegExp(`max="${rules.otcovska.nastupDoDne}"`));
 });
+
+// ROD-11: odkazy v patičce a u pravidel vedou na slibovaný obsah (ČSSZ cssz.gov.cz, ZSSP § 30).
+test('ROD-11: URL zdrojů nevedou na OSVČ ani na úvodní stránku ČSSZ, RP odkazuje na ZSSP', () => {
+  const urls = [...rules.zdroje.map((z) => z.url), rules.otcovska.url, ...rules.rodicovsky.map((r) => r.url)];
+  for (const u of urls) {
+    assert.doesNotMatch(u, /cssz\.cz\/cz\/pojisteni-osvc/);
+    assert.notEqual(u, 'https://cssz.cz/otcovska');
+  }
+  assert.equal(rules.otcovska.url, 'https://www.cssz.gov.cz/web/cz/otcovska');
+  assert.ok(rules.zdroje.some((z) => z.url.includes('zakonyprolidi.cz/cs/1995-117')));
+});
