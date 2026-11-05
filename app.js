@@ -152,8 +152,12 @@ function vykresliSouhrn() {
     dlazdice('Příjem rodiny za celé období', kc(s.celkem), `z toho orientační čisté mzdy ${kc(s.mzdy)}`),
   ].join('');
 
+  const hraniceText = (h) => `hranice ${h.rok}: ${NF.format(h.h1)} / ${NF.format(h.h2)} / ${NF.format(h.h3)} Kč`;
+  const poNovemRoce = (info) => (info.poNovemRoce
+    ? ` Od ${formatCz(info.poNovemRoce.od)} se dávka přepočítá podle nových hranic (§ 22 odst. 2 ZNP): redukovaný DVZ ${NF.format(info.poNovemRoce.redDvz)} Kč (${hraniceText(info.poNovemRoce.hranice)}) → ${kc(info.poNovemRoce.denni)} denně.`
+    : '');
   const radekDvz = (nazev, info) => (info
-    ? `<li>${nazev}: rozhodné období ${info.dny} dní, DVZ ${NF2.format(info.dvz)} Kč → redukovaný DVZ ${NF.format(info.redDvz)} Kč (hranice ${info.hranice.rok}: ${NF.format(info.hranice.h1)} / ${NF.format(info.hranice.h2)} / ${NF.format(info.hranice.h3)} Kč) → 70 % = ${kc(info.denni)} denně, nástup ${formatCz(info.datum)}.</li>`
+    ? `<li>${nazev}: rozhodné období ${info.dny} dní, DVZ ${NF2.format(info.dvz)} Kč → redukovaný DVZ ${NF.format(info.redDvz)} Kč (${hraniceText(info.hranice)}) → 70 % = ${kc(info.denni)} denně, nástup ${formatCz(info.datum)}.${poNovemRoce(info)}</li>`
     : '');
   $('#detail').innerHTML = `<ul>
     ${radekDvz('Mateřská – matka', plan.matka.ppm)}

@@ -56,7 +56,9 @@ redukčních hranic…“). Najdete ho na [e-sbirka.gov.cz](https://e-sbirka.gov
 ```
 
 Dokud rok chybí, aplikace použije poslední známý rok a zobrazí upozornění. Hranice se vybírají podle
-**data nástupu na dávku**, ne podle data porodu.
+**data nástupu na dávku**, ne podle data porodu, ale jen do 31. 12. Trvá-li mateřská nebo otcovská i 1. ledna,
+od tohoto dne se dávka přepočítá podle hranic nového roku (DVZ zůstává, § 22 odst. 2 ZNP). Strop
+rodičovského příspěvku se počítá z DVZ redukovaného hranicemi roku narození dítěte (§ 30 odst. 3 ZSSP).
 
 ### 2. Rodičovský příspěvek (při změně zákona o státní sociální podpoře)
 

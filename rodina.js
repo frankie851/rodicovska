@@ -100,6 +100,24 @@ export function davkaRodice(rules, mesicniPrijem, narok, datumNaroku, sazba) {
   return { datum: datumNaroku, dny, dvz: d, redDvz: red, denni: denniDavka(red, sazba), hranice };
 }
 
+/**
+ * Denní dávka za den `iso`. DVZ zůstává z nástupu (§ 18 ZNP), ale od 1. ledna dalšího roku se dávka
+ * přepočítá podle redukčních hranic platných od tohoto dne (§ 22 odst. 2 ZNP).
+ */
+export function davkaVeDni(rules, info, iso, sazba) {
+  if (String(iso).slice(0, 4) === String(info.datum).slice(0, 4)) return info.denni;
+  const hranice = hraniceProDatum(rules, iso);
+  return denniDavka(redukovanyDvz(info.dvz, hranice, rules.ppm.redukce), sazba);
+}
+
+/** Údaje o přepočtené dávce od 1. 1. roku `rok` (pro výpis „Jak jsme počítali“). */
+export function davkaPoNovemRoce(rules, info, rok, sazba) {
+  const od = `${rok}-01-01`;
+  const hranice = hraniceProDatum(rules, od);
+  const red = redukovanyDvz(info.dvz, hranice, rules.ppm.redukce);
+  return { od, redDvz: red, denni: denniDavka(red, sazba), hranice };
+}
+
 // ---------- Rodičovský příspěvek ----------
 
 /** Pravidla RP podle data narození dítěte. */
@@ -290,6 +308,10 @@ export function planRodiny(vstupy, rules) {
         start, konec: pridejDny(start, rules.otcovska.dny - 1),
         ...davkaRodice(rules, v.prijemOtec, true, start, rules.otcovska.sazba),
       };
+      const rokKonce = Number(otcovska.konec.slice(0, 4));
+      if (rokKonce > Number(start.slice(0, 4))) {
+        otcovska.poNovemRoce = davkaPoNovemRoce(rules, otcovska, rokKonce, rules.otcovska.sazba);
+      }
     }
   }
 
@@ -305,7 +327,8 @@ export function planRodiny(vstupy, rules) {
       const d = new Date(ms);
       mesice.set(index, {
         index, rok: d.getUTCFullYear(), mesic: d.getUTCMonth() + 1,
-        ppm: { matka: 0, otec: 0 }, otc: 0, prace: { matka: 0, otec: 0 }, pecuje: null,
+        ppm: { matka: 0, otec: 0 }, ppmKc: { matka: 0, otec: 0 }, otc: 0, otcKc: 0,
+        prace: { matka: 0, otec: 0 }, pecuje: null,
       });
     }
     const m = mesice.get(index);
@@ -317,10 +340,18 @@ export function planRodiny(vstupy, rules) {
         const prijem = kdo === 'matka' ? v.prijemMatka : v.prijemOtec;
         ppmInfo[kdo] = davkaRodice(rules, prijem, true, iso, P.sazba);
       }
+      const info = ppmInfo[kdo];
+      if (!info.poNovemRoce && iso.slice(0, 4) !== info.datum.slice(0, 4)) {
+        info.poNovemRoce = davkaPoNovemRoce(rules, info, Number(iso.slice(0, 4)), P.sazba);
+      }
       m.ppm[kdo]++;
+      m.ppmKc[kdo] += davkaVeDni(rules, info, iso, P.sazba);
     }
     const naOtcovske = otcovska && iso >= otcovska.start && iso <= otcovska.konec;
-    if (naOtcovske) m.otc++;
+    if (naOtcovske) {
+      m.otc++;
+      m.otcKc += davkaVeDni(rules, otcovska, iso, rules.otcovska.sazba);
+    }
     if (kdo !== 'matka' && v.prijemMatka > 0) m.prace.matka++;
     if (kdo !== 'otec' && !naOtcovske && v.prijemOtec > 0) m.prace.otec++;
   }
@@ -331,10 +362,12 @@ export function planRodiny(vstupy, rules) {
   const ppmVMesici = (index) => {
     const m = mesice.get(index);
     if (!m) return 0;
-    return ['matka', 'otec'].reduce((s, kdo) => s + (m.ppm[kdo] ? m.ppm[kdo] * ppmInfo[kdo].denni : 0), 0);
+    return m.ppmKc.matka + m.ppmKc.otec;
   };
+  // Strop RP z DVZ stanoveného k datu narození (§ 30 odst. 3 písm. b) ZSSP): u rodiče na PPM jeho DVZ
+  // redukovaný hranicemi roku narození dítěte.
   const dvzProRp = ['matka', 'otec'].map((kdo) => {
-    if (ppmInfo[kdo]) return ppmInfo[kdo].redDvz;
+    if (ppmInfo[kdo]) return redukovanyDvz(ppmInfo[kdo].dvz, hraniceProDatum(rules, B), P.redukce);
     const info = davkaRodice(rules, kdo === 'matka' ? v.prijemMatka : v.prijemOtec, maNarok[kdo], B, P.sazba);
     return info ? info.redDvz : 0;
   });
@@ -357,9 +390,9 @@ export function planRodiny(vstupy, rules) {
     if (m.pecuje) posledniPecujici = m.pecuje;
     const polozky = [];
     for (const kdo of ['matka', 'otec']) {
-      if (m.ppm[kdo]) polozky.push({ typ: 'ppm', kdo, dni: m.ppm[kdo], castka: m.ppm[kdo] * ppmInfo[kdo].denni });
+      if (m.ppm[kdo]) polozky.push({ typ: 'ppm', kdo, dni: m.ppm[kdo], castka: m.ppmKc[kdo] });
     }
-    if (m.otc) polozky.push({ typ: 'otcovska', kdo: 'otec', dni: m.otc, castka: m.otc * otcovska.denni });
+    if (m.otc) polozky.push({ typ: 'otcovska', kdo: 'otec', dni: m.otc, castka: m.otcKc });
     if (rpPoMesicich.has(m.index)) polozky.push({ typ: 'rp', kdo: posledniPecujici, castka: rpPoMesicich.get(m.index) });
     const dim = dnuVMesici(m.rok, m.mesic);
     const pm = parametryMzdy(rules, m.rok);
@@ -404,7 +437,8 @@ export function planRodiny(vstupy, rules) {
           : `Ani při maximální výši ${kc(strop)} se celá částka do 3 let nevyčerpá.`),
     });
   }
-  const pouziteHranice = [ppmInfo.matka, ppmInfo.otec, otcovska].filter(Boolean).map((x) => x.hranice);
+  const pouziteHranice = [ppmInfo.matka, ppmInfo.otec, otcovska].filter(Boolean)
+    .flatMap((x) => [x.hranice, x.poNovemRoce?.hranice]).filter(Boolean);
   const odhadHranice = pouziteHranice.find((h) => h.odhad);
   if (odhadHranice) {
     varovani.push({ typ: 'odhadHranice', uroven: 'info', text: `Redukční hranice pro požadovaný rok ještě nejsou v rules.json, použity hodnoty roku ${odhadHranice.rok}.` });

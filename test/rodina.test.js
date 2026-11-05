@@ -107,11 +107,15 @@ test('redukční hranice podle roku nástupu, neznámý rok → poslední znám�
   assert.equal(h.odhad, true);
 });
 
-test('porod v lednu 2027 s nástupem v prosinci 2026 → mateřská podle hranic 2026, RP 400 000', () => {
+// Od 1. 1. 2027 se mateřská přepočítá podle hranic 2027 (§ 22 odst. 2 ZNP; revize 5. 11. 2026, ROD-03).
+test('porod v lednu 2027 s nástupem v prosinci 2026 → mateřská podle hranic 2026 do 31. 12., od 1. 1. 2027 podle hranic 2027, RP 400 000', () => {
   const plan = planRodiny({ terminPorodu: '2027-01-20', prijemMatka: 200000, kdoPpm: 'matka' }, rules);
   assert.equal(plan.matka.ppm.hranice.rok, 2026);
   assert.equal(plan.matka.ppm.redDvz, 2857);
-  assert.equal(plan.matka.ppm.denni, 2000); // 0,7 × 2857 = 1999,9 → 2000
+  assert.equal(plan.matka.ppm.denni, 2000); // 0,7 × 2857 = 1999,9 → 2000, jen do 31. 12. 2026
+  assert.equal(plan.matka.ppm.poNovemRoce.redDvz, 3015);
+  assert.equal(plan.matka.ppm.poNovemRoce.denni, 2111); // 0,7 × 3015 = 2110,5 → 2111 od 1. 1. 2027
+  assert.equal(plan.souhrn.ppm, 411203); // 23 × 2 000 + 173 × 2 111
   assert.equal(plan.rp.celkem, 400000);
 });
 
@@ -270,4 +274,37 @@ test('ROD-02: mateřská vyšší než zvolená RP → v měsících 0–5 žád
   }, rules);
   assert.equal(plan.rp.odMesice, 6);
   for (let i = 0; i <= 5; i++) assert.equal(rpVMesici(plan, i), undefined, `RP v měsíci ${i}`);
+});
+
+// ROD-03: dávka, na kterou vznikl nárok před 1. lednem a trvá, se od 1. ledna přepočítá podle nových
+// redukčních hranic (§ 22 odst. 2 ZNP); strop RP z DVZ redukovaného hranicemi roku narození (§ 30 odst. 3 ZSSP).
+const ppmVMesici = (plan, rok, mesic) => plan.mesice.find((m) => m.rok === rok && m.mesic === mesic)
+  .polozky.filter((p) => p.typ === 'ppm').reduce((s, p) => s + p.castka, 0);
+
+test('ROD-03: mateřská přes Nový rok (80 000 Kč) → do 31. 12. 1 524 Kč/den, od 1. 1. 2027 1 578 Kč/den', () => {
+  const plan = planRodiny({ terminPorodu: '2027-01-20', prijemMatka: 80000, kdoPpm: 'matka', otcovska: false }, rules);
+  assert.equal(plan.ppm.start, '2026-12-09');
+  assert.equal(ppmVMesici(plan, 2026, 12), 23 * 1524);
+  assert.equal(ppmVMesici(plan, 2027, 1), 31 * 1578);
+  assert.equal(plan.souhrn.ppm, 308046);
+  assert.equal(plan.matka.ppm.poNovemRoce.denni, 1578);
+  assert.equal(plan.rp.strop, 47334); // 0,7 × 30 × 2 254 (DVZ redukovaný hranicemi 2027)
+});
+
+test('ROD-03: mateřská přes Nový rok (200 000 Kč) → 411 203 Kč', () => {
+  const plan = planRodiny({ terminPorodu: '2027-01-20', prijemMatka: 200000, kdoPpm: 'matka', otcovska: false }, rules);
+  assert.equal(plan.souhrn.ppm, 411203);
+});
+
+test('ROD-03: otcovská 28. 12. 2026 – 10. 1. 2027 (80 000 Kč) → 4 × 1 524 + 10 × 1 578 = 21 876 Kč', () => {
+  const plan = planRodiny({ terminPorodu: '2026-12-24', prijemOtec: 80000, otcovska: true, otcovskaOdDne: 4 }, rules);
+  assert.equal(plan.otec.otcovska.start, '2026-12-28');
+  assert.equal(plan.otec.otcovska.konec, '2027-01-10');
+  assert.equal(plan.souhrn.otcovska, 21876);
+});
+
+test('ROD-03 kontrola: mateřská celá v jednom roce se nemění (135 436 Kč)', () => {
+  const plan = planRodiny({ terminPorodu: '2026-03-15', prijemMatka: 30000, kdoPpm: 'matka', otcovska: false }, rules);
+  assert.equal(plan.souhrn.ppm, 135436);
+  assert.equal(plan.matka.ppm.poNovemRoce, undefined);
 });
